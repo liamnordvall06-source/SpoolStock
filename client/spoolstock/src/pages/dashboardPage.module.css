@@ -1,0 +1,123 @@
+.mainContainer {
+  width: 100%;
+  min-height: 100vh;        
+  display: flex;
+  background-color: #F6F8FA;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.innerContainer {
+  margin: 180px 0 200px 0;
+  width: 1600px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.summaryContainer {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    height: 200px;
+    background-color: #ffffff;
+    border-radius: 20px;
+    display: flex;
+}
+
+.middleContainer {
+    width: 100%;
+    height: 600px;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.transcationsContainer {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    height: 460px;
+    background-color: #ffffff;
+    border-radius: 20px;
+}
+
+.stockContainer {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    width: 60%;
+    background-color: #ffffff;
+    border-radius: 20px;
+}
+
+.statisticsContainer {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    width: 40%;
+    background-color: #ffffff;
+    border-radius: 20px;
+}
+
+.iconContainer {
+    margin: 20px 0 0 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    border: 1px solid #CFCFCF;  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+}
+
+.summaryContainer h2,
+.summaryContainer h1 {
+    margin: 0 0 0 20px;
+}
+
+.summaryContainer h1 {
+    font-size: 32px;
+}
+
+.summaryContainer h2 {
+    font-size: 22px;
+}
+
+.summaryContainer .rowContainer1,
+.summaryContainer .rowContainer2,
+.summaryContainer .rowContainer3,
+.summaryContainer .rowContainer4 {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 200px;
+}
+
+.summaryContainer .rowContainer1,
+.summaryContainer .rowContainer2,
+.summaryContainer .rowContainer3 {
+    border-right: 1px solid #CFCFCF;  
+}
+
+@media only screen and (max-width: 2000px) {
+    .innerContainer {
+        width: 1400px;
+    }
+}
+
+
+@media only screen and (max-width: 1700px) {
+    .innerContainer {
+        width: 1200px;
+    }
+}
+
+@media only screen and (max-width: 1300px) {
+    .innerContainer {
+        width: 800px;
+    }
+
+}
+
+@media only screen and (max-width: 900px) {
+    .innerContainer {
+        width: 600px;
+    }
+}
