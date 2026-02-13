@@ -14,10 +14,9 @@ const HeaderComponent = () => {
                     <img src={BrandLogo} />
                      <div className={styles.rightContainer}>
                         <ul className={styles.linksContainer}>
-                            <li><a href="/">Lager</a></li>
-                            <li><a href="/">Uttag</a></li>
-                            <li><a href="/">Fakturor</a></li>
-                            <li><a href="/">Konto</a></li>
+                            <li><a href="/">Dashboard</a></li>
+                            <li><a href="/stock">Lager</a></li>
+                            <li><a href="/transcations">Transaktioner</a></li>
                         </ul>
                      </div>
                 </div>
