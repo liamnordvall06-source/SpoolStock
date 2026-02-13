@@ -22,13 +22,15 @@ const DashboardPage = () => {
     const [withdrawalWeight, setWithdrawalWeight] = useState(0);
     const [withdrawalWeightSinceStart, setWithdrawalWeightSinceStart] = useState(0);
 
-    const fetchData = async () => {
-        fetchStock("0LhqIqojEDGj4rIfZWkU");
-        fetchTranscations("0LhqIqojEDGj4rIfZWkU");
+
+    const fetchData = async (CID) => {
+        fetchStock(CID);
+        fetchTranscations(CID);
     }
 
-    useEffect(() => {
-        fetchData();
+    useEffect(() => {        
+        const CID = localStorage.getItem("CID");
+        fetchData(CID);
     }, [])
 
 
@@ -244,9 +246,8 @@ const handleOnClose = () => {
                                         <YAxis label={{ value: "kg", angle: -90, position: "insideLeft" }} />
                                         <Tooltip />
 
-                                        {/* Use weight instead of uv */}
                                         <Area
-                                        type="natural"
+                                        type="monotone"
                                         dataKey="weight"
                                         stroke="#4294FF"
                                         fill="#4294FF"

@@ -34,15 +34,15 @@ const WithdrawalComponent = ({productId, onClose}) => {
                 productId
             }
 
-            const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/0LhqIqojEDGj4rIfZWkU/stock`, {
+            const CID = localStorage.getItem("CID");
+
+            const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/${CID}/stock`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(jsonObj)
             })
 
             const data = await response.json();
-
-            console.log(data);
 
             onClose();
 

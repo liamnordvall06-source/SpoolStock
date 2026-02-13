@@ -7,16 +7,40 @@ import TranscationsPage from './pages/transacationsPage';
 import AdminPage from './pages/adminPage';
 import AuthenticationPage from './pages/authenticationPage';
 
+import ProtectedRoute from './routes/ProtectedRoute';
+
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/stock" element={<StockPage />} />
-          <Route path="/transcations" element={<TranscationsPage />} />
-          <Route path="/admin" element={<AdminPage />}/>
-          <Route path="/auth" element={<AuthenticationPage />}/>
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/stock" 
+            element={
+              <ProtectedRoute>
+                <StockPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/transcations" 
+            element={
+              <ProtectedRoute>
+                <TranscationsPage />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Public routes */}
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/auth" element={<AuthenticationPage />} />
         </Routes>
       </div>
     </Router>

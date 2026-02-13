@@ -1,7 +1,6 @@
 {
   "projects": {
-    "default": "spoolstock-f79fa",
-    "spoolstock": "spoolstock-36d74"
+    "default": "spoolstock-f79fa"
   },
   "targets": {},
   "etags": {}

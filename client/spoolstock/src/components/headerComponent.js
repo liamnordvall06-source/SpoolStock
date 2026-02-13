@@ -1,9 +1,17 @@
 import React from "react";
 import styles from "./headerComponent.module.css";
 import BrandLogo from "../assets/BlackLogo.png"
+import { getAuth, signOut } from "firebase/auth";
+import { app } from "../middleware/firebase";
 
+const auth = getAuth(app);
 
 const HeaderComponent = () => {
+
+    const handleSignout = async () => {
+        await signOut(auth);
+    }
+
     return (
         <div className={styles.mainContainer}>
             <div className={styles.bannerContainer}>
@@ -17,6 +25,7 @@ const HeaderComponent = () => {
                             <li><a href="/">Dashboard</a></li>
                             <li><a href="/stock">Lager</a></li>
                             <li><a href="/transcations">Transaktioner</a></li>
+                            <button onClick={handleSignout}>Logga ut</button>
                         </ul>
                      </div>
                 </div>

@@ -12,7 +12,9 @@ const TranscationsPage = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            fetchTranscations("0LhqIqojEDGj4rIfZWkU");
+            const CID = localStorage.getItem("CID")
+
+            fetchTranscations(CID);
         }
 
         fetchData();
@@ -73,7 +75,7 @@ const TranscationsPage = () => {
                                             <td>#{transaction.id}</td>
                                             <td>{dateStr}</td>
                                             <td>{transaction.productName}</td>
-                                            <td>{transaction.quantity + "ST"}</td>
+                                            <td>{transaction.quantity + " ST"}</td>
                                             <td>{transaction.type === "deposite" ? "Insättning" : "Uttag"}</td>
                                         </tr>
                                         );

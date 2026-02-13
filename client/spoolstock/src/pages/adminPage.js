@@ -20,6 +20,7 @@ const AdminPage = () => {
 
     const [selectedCompany, setSelectedCompany] = useState("");
 
+
     useEffect(() => {
         const fetchData = async () => {
             fetchProducts();
@@ -27,6 +28,8 @@ const AdminPage = () => {
         }
 
         fetchData();
+
+
     }, []);
 
 

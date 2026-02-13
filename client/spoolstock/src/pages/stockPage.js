@@ -15,7 +15,8 @@ const StockPage = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            fetchStock("0LhqIqojEDGj4rIfZWkU");
+            const CID = localStorage.getItem("CID")
+            fetchStock(CID);
         }
 
         fetchData();

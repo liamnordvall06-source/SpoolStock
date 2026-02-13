@@ -4,9 +4,11 @@ import HeaderComponent from "../components/headerComponent";
 import GoogleLogo from "../assets/GoogleLogo.png"
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
 import { app } from "../middleware/firebase";
+import {  useNavigate } from "react-router-dom";
 
 const AuthenticationPage = () => {
 
+    const navigate = useNavigate();
     const provider = new GoogleAuthProvider();
     const auth = getAuth(app);
 
@@ -16,19 +18,24 @@ const handleGoogleSign = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/customer/loQT32cudJUjpJyEPZP4X62Rznd2`);
+    const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/customer/${user.uid}`);
 
     const data = await response.json();
-    if (!response.ok) {
-      console.warn("Customer not found:", data.error);
-      // Maybe create a new customer here, or redirect user to setup page
-      return;
+    
+    console.log("Customer data:", data);
+
+    if (data) {
+        localStorage.setItem("CID", data.companyId);
+        navigate("/");
+    } else {
+        localStorage.removeItem("CID");
+        navigate("/");
     }
 
-    console.log("Customer data:", data);
-    localStorage.setItem("CID", data.companyId);
   } catch (err) {
     console.error("Google sign-in error:", err);
+    localStorage.removeItem("CID");
+    navigate("/");
   }
 };
 
