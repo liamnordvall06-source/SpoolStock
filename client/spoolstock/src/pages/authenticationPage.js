@@ -5,6 +5,8 @@ import GoogleLogo from "../assets/GoogleLogo.png"
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
 import { app } from "../middleware/firebase";
 import {  useNavigate } from "react-router-dom";
+import SpoolStockBanner from "../assets/SpoolStockBanner.png"
+import BrandIt3DLogo from "../assets/BlackLogo.png";
 
 const AuthenticationPage = () => {
 
@@ -13,31 +15,30 @@ const AuthenticationPage = () => {
     const auth = getAuth(app);
 
 
-const handleGoogleSign = async () => {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
+    const handleGoogleSign = async () => {
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
 
-    const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/customer/${user.uid}`);
+        const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/customer/${user.uid}`);
 
-    const data = await response.json();
-    
-    console.log("Customer data:", data);
+        const data = await response.json();
+        
 
-    if (data) {
-        localStorage.setItem("CID", data.companyId);
-        navigate("/");
-    } else {
+        if (data) {
+            localStorage.setItem("CID", data.companyId);
+            navigate("/");
+        } else {
+            localStorage.removeItem("CID");
+            navigate("/");
+        }
+
+    } catch (err) {
+        console.error("Google sign-in error:", err);
         localStorage.removeItem("CID");
         navigate("/");
     }
-
-  } catch (err) {
-    console.error("Google sign-in error:", err);
-    localStorage.removeItem("CID");
-    navigate("/");
-  }
-};
+    };
 
 
 
@@ -47,23 +48,36 @@ const handleGoogleSign = async () => {
 
             <div className={styles.innerContainer}>
                 <div className={styles.authenticationContainer}>
-                    <h1>Välkommen tillbaka</h1>
-                    <p>Skriv in dina inloggnignsuppgifter eller logga in med Google</p>
+                    <div className={styles.innerAuthContainer}>
+                        <div className={styles.headerContainer}>
+                            <img src={BrandIt3DLogo} alt="BrandIt3D" />
+                            <h1>Välkommen tillbaka till SpoolStock</h1>
+                            <p>Ha koll på dina lagersaldon och gör uttag från ditt filament lager</p>
+                        </div>
 
-                    <form>
-                        <label>Email</label>
-                        <input type="text"></input>
-                        <label>Lösenord</label>
-                        <input type="password"></input>
-                        <button type="submit" className={styles.loginBtn}>Logga in</button>
+                        <form>
+                            <label>Email</label>
+                            <input type="text"></input>
 
-                    </form>
+                            <label>Lösenord</label>
+                            <input type="password"></input>
+                            
+                            {/* <a href="/">Glömt ditt lösenord?</a> */}
 
-                        <button className={styles.signinGoogleBtn} onClick={handleGoogleSign}>
-                            <img src={GoogleLogo} alt="Google"></img>
-                            <p>Logga in med Google</p>
-                        </button>
+                            <button type="submit">Logga in</button>
+                        </form>
 
+                        <div className={styles.footerContainer}>
+                            <button onClick={handleGoogleSign}>
+                                <img src={GoogleLogo} alt="Google"/>
+                                <p>Logga in med Google</p>
+                            </button>
+                            {/* <p className={styles.createAccntText}>Har du inget konto? <a href="/">Skapa ett</a></p> */}
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.bannerContainer}>
+                    <img src={SpoolStockBanner} alt="SpoolStock" />
                 </div>
             </div>            
         </div>

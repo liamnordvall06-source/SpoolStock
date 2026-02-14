@@ -1,5 +1,5 @@
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
 
 import DashboardPage from './pages/dashboardPage';
 import StockPage from './pages/stockPage';
@@ -8,6 +8,8 @@ import AdminPage from './pages/adminPage';
 import AuthenticationPage from './pages/authenticationPage';
 
 import ProtectedRoute from './routes/ProtectedRoute';
+import WithdrawalPage from './pages/withdrawalPage';
+
 
 function App() {
   return (
@@ -35,6 +37,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <TranscationsPage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/withdraw/:productId" 
+            element={
+              <ProtectedRoute>
+                <WithdrawalPage />
               </ProtectedRoute>
             } 
           />

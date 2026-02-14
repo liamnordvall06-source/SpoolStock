@@ -8,59 +8,158 @@
 }
 
 .innerContainer {
-  margin: 180px 0 200px 0;
+  margin-top: 200px;
   width: 1600px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
+  flex-direction: row;
+  justify-content: center;
 }
 
 .authenticationContainer {
-    width: 500px;
-    background-color: #ffffff;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  width: 700px;
+  height: 800px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 20px 0 0 20px;
 }
 
-.authenticationContainer h1 {
-    margin: 0;
+.innerAuthContainer {
+  width: 80%;
 }
 
-.loginBtn {
+.headerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.headerContainer h1 {
+  text-align: center;
+  font-weight: 500;
+  font-size: 36px;
+  margin: 0 0 10px 0
+}
+
+.headerContainer p {
+  text-align: center;
+  font-weight: 300;
+  font-size: 22px;
+  margin: 10px 0 20px 0;
+}
+
+.authenticationContainer img {
+  margin-bottom: 40px;
+  width: 250px;
+}
+
+form {
+  display: flex;
+  width: 100%;
+}
+
+form a {
+  margin-top: 20px;
+}
+
+form button {
+  width: 100%;
   height: 45px;
   border-radius: 50px;
   border: 1px solid transparent;
   background-color: #4294FF;
   color: white;
+  margin-top: 50px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-  margin-top: 30px;
+  font-family: Inter;
+  font-weight: 500;
 }
 
-.authenticationContainer form {
-    display: flex;
+input {
+  width: 100%;
+  height: 45px;
 }
 
-.signinGoogleBtn {
+.bannerContainer {
+  width: 600px;
+  height: 800px;
+}
+
+.bannerContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0 20px 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.footerContainer button {
+  width: 100%;
   height: 45px;
   border-radius: 50px;
   border: 1px solid transparent;
   background-color: #ffffff;
-  color: rgb(65, 65, 65);
+  color: rgb(46, 46, 46);
+  margin-top: 20px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-  margin: 50px 0 50px 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 20px;    
+  align-items: center;
+  gap: 10px;
+  font-family: Inter;
+  font-weight: 500;
 }
 
-.signinGoogleBtn img {
-    width: 24px;
+.footerContainer button img {
+  margin: 0;
+  width: 32px;
 }
+
+.footerContainer .createAccntText {
+  margin-top: 50px;
+  text-align: center;
+}
+
+@media (max-width: 1700px) {
+  .authenticationContainer {
+    width: 600px;
+  }
+
+  .bannerContainer {
+    width: 500px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .authenticationContainer {
+    width: 700px;
+    padding: 80px 0;
+    border-radius: 20px;
+  }
+  .bannerContainer {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .authenticationContainer {
+    width: 600px;
+    padding: 40px 0;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .authenticationContainer {
+    width: 400px;
+    padding: 20px 0;
+    border-radius: 20px;
+  }
+}
+

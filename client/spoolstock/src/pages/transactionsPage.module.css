@@ -25,12 +25,6 @@
     min-height: 800px;
 }
 
-.transcationsTableWrapper {
-  max-height: 750px;
-  overflow-y: auto;   
-}
-
-
 table {
   width: 100%;
   border-collapse: collapse;
@@ -90,4 +84,51 @@ tr {
     margin: 0;
     font-weight: 300;
     font-size: 22px;
+}
+
+
+.transcationsTableWrapper {
+  max-height: 750px;
+  overflow-y: auto;   
+}
+
+
+@media (max-width: 1700px) {
+  .innerContainer {
+    width: 1400px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .innerContainer {
+    width: 1100px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .innerContainer {
+    width: 900px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .innerContainer {
+    width: 700px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 800px) {
+  .innerContainer {
+    width: 500px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .transcationIdContainer {
+    display: none;
+  }
+
 }

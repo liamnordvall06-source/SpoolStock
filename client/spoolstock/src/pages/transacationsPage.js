@@ -51,7 +51,7 @@ const TranscationsPage = () => {
                                     <table>
                                     <thead>
                                         <tr className={styles.tableHeader}>
-                                        <th>Transaktion ID</th>
+                                        <th className={styles.transcationIdContainer}>Transaktion ID</th>
                                         <th>Datum</th>
                                         <th>Artikel</th>
                                         <th>Antal uttagna</th>
@@ -72,7 +72,7 @@ const TranscationsPage = () => {
 
                                         return (
                                         <tr key={transaction.id}>
-                                            <td>#{transaction.id}</td>
+                                            <td className={styles.transcationIdContainer}>#{transaction.id}</td>
                                             <td>{dateStr}</td>
                                             <td>{transaction.productName}</td>
                                             <td>{transaction.quantity + " ST"}</td>

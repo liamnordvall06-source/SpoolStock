@@ -1,0 +1,11 @@
+@media (max-width: 600px) {
+  body {
+    zoom: 0.8;
+  }
+}
+
+@media (max-width: 500px) {
+  body {
+    zoom: 0.6;
+  }
+}
