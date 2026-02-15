@@ -46,15 +46,20 @@ const TransactionsComponent = () => {
                         </thead>
                         
                         <tbody>
-                            {transactions && transactions.map((transaction) => {
+                            {transactions && transactions    .sort((a, b) => {
+                                const dateA = a.date?._seconds ? a.date._seconds : new Date(a.date).getTime() / 1000;
+                                const dateB = b.date?._seconds ? b.date._seconds : new Date(b.date).getTime() / 1000;
+                                return dateB - dateA;
+                            }).map((transaction) => {
                                 let dateStr = "N/A";
-                                    if (transaction.date) {
-                                        if (transaction.date.toDate) {
-                                            dateStr = transaction.date.toDate().toLocaleString();
-                                        } else if (transaction.date._seconds) {
-                                            dateStr = new Date(transaction.date._seconds * 1000).toLocaleString();
-                                        }
+                                if (transaction.date) {
+                                    if (transaction.date.toDate) {
+                                        dateStr = transaction.date.toDate().toLocaleDateString();
+                                    } 
+                                    else if (transaction.date._seconds) {
+                                        dateStr = new Date(transaction.date._seconds * 1000).toLocaleDateString();
                                     }
+                                }
 
                                     return (
                                         <tr key={transaction.id}>

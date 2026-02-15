@@ -67,6 +67,7 @@ const StockComponent = () => {
                             <table>
                                 <thead>
                                     <tr className={styles.tableHeader}>
+                                    <th></th>
                                     <th className={styles.distributorRowTh}>Leverantör</th>
                                     <th>Beskrivning</th>
                                     <th>Vikt</th>
@@ -79,6 +80,7 @@ const StockComponent = () => {
                                         stock?.map(stockItem => {
                                             return (
                                                 <tr onClick={() => handleWithdrawal(stockItem.id)}>
+                                                    <td><img src={stockItem.productImageUrl}></img></td>
                                                     <td className={styles.distributorRowTh}>{stockItem.productDistributor}</td>
                                                     <td>{stockItem.productName}</td>
                                                     <td>{stockItem.productWeight} KG</td>
