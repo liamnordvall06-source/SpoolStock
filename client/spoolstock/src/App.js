@@ -9,9 +9,26 @@ import AuthenticationPage from './pages/authenticationPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import WithdrawalPage from './pages/withdrawalPage';
 import AdminStockPage from './pages/admin/AdminStockPage';
+import { useEffect } from 'react';
 
 
 function App() {
+
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+
+  const fetchData = async () => {
+    const res = await fetch("https://api-najddsqtfa-uc.a.run.app/spoolstock");
+
+    const data = await res.text();
+
+    alert(data);
+  }
+
+
   return (
     <Router>
       <div className="App">

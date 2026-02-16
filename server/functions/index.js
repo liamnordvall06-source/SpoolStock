@@ -650,6 +650,66 @@ app.get("/shopify/variant", async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.get("/spoolstock", async (req, res) => {
+  try { 
+    res.status(200).send("en början");
+  } catch (liam210) {
+    res.status(500).send(liam210);
+  }
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 exports.api = onRequest(
   {
     cors: true, 
