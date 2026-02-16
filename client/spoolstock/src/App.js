@@ -4,11 +4,11 @@ import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-
 import DashboardPage from './pages/dashboardPage';
 import StockPage from './pages/stockPage';
 import TranscationsPage from './pages/transacationsPage';
-import AdminPage from './pages/adminPage';
 import AuthenticationPage from './pages/authenticationPage';
 
 import ProtectedRoute from './routes/ProtectedRoute';
 import WithdrawalPage from './pages/withdrawalPage';
+import AdminStockPage from './pages/admin/AdminStockPage';
 
 
 function App() {
@@ -49,8 +49,19 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+
+          <Route 
+            path="/admin/stock" 
+            element={
+              <ProtectedRoute>
+                <AdminStockPage />
+              </ProtectedRoute>
+            } 
+          />
+
+
           {/* Public routes */}
-          <Route path="/admin" element={<AdminPage />} />
           <Route path="/auth" element={<AuthenticationPage />} />
         </Routes>
       </div>

@@ -45,6 +45,7 @@ table {
 }
 
 th {
+  height: 50px;
   font-weight: 500;
 }
 
@@ -59,8 +60,10 @@ td button {
 }
 
 td {
+  height: 60px;
   padding: 0;
   border-bottom: 1px solid #d3d3d3;
+  cursor: pointer;
 }
 
 tr:hover {
