@@ -28,7 +28,10 @@
 .transactionsWrapper {
     margin-top: 40px; 
     width: 100%;
-    height: 800px; 
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    height: 700px; 
 }
 
 .stockWrapper {
@@ -62,7 +65,7 @@
   }
 
   .transactionsWrapper {
-    margin-top: 50px;
+    margin-top: 40px;
   }
 
   .chartWrapper {
@@ -92,4 +95,12 @@
   .innerContainer {
     width: 500px;
   }
+}
+
+
+.notification {
+  z-index: 100;
+  position: fixed;
+  bottom: 20px;
+  right: 50%;
 }

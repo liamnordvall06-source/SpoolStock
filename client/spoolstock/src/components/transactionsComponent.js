@@ -63,6 +63,7 @@ const TransactionsComponent = () => {
 
                                     return (
                                         <tr key={transaction.id}>
+                                            <td ></td>
                                             <td className={styles.transcationIdContainer}>#{transaction.id}</td>
                                             <td>{dateStr}</td>
                                             <td>{transaction.productName}</td>

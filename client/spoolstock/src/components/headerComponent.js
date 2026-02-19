@@ -33,16 +33,16 @@ const HeaderComponent = () => {
                 <div className={styles.innerContainer}>
                     <img src={BrandLogo} />
                      <div className={styles.rightContainer}>
-                        {/* {user && 
+                        {user && 
                             <ul className={styles.linksContainer}>
                                 <li><a href="/">Dashboard</a></li>
                                 <li><a href="/stock">Lager</a></li>
                                 <li><a href="/transcations">Transaktioner</a></li>
                                 <button onClick={handleSignout}>Logga ut</button>
                             </ul>
-                        } */}
+                        }
 
-                        {user && 
+                        {/* {user && 
                             <ul className={styles.linksContainer}>
                                 <li><a href="/">Dashboard</a></li>
                                 <li><a href="/admin/stock">Lager</a></li>
@@ -50,7 +50,7 @@ const HeaderComponent = () => {
                                 <li><a href="/transcations">Transaktioner</a></li>
                                 <button onClick={handleSignout}>Logga ut</button>
                             </ul>
-                        }
+                        } */}
                      </div>
                 </div>
                

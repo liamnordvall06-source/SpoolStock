@@ -6,6 +6,9 @@ import StockComponent from "../components/stockComponent";
 import TransactionsComponent from "../components/transactionsComponent";
 import ChartComponent from "../components/chartComponent";
 
+import Alert from '@mui/material/Alert';
+import AlertTitle from "@mui/material/AlertTitle";
+
 
 const DashboardPage = () => {
 
@@ -14,8 +17,14 @@ const DashboardPage = () => {
         <div className={styles.mainContainer}>
             <HeaderComponent />
 
+            <Alert className={styles.notification} severity="warning">
+                <AlertTitle>Dags att fylla på</AlertTitle>
+                Flera av dina material börjar ta slut. Kontakta oss för att boka <br /> en leverans
+            </Alert>
+
             <div className={styles.innerContainer}>
                 <SummaryComponent />
+
 
 
                 <div className={styles.middleContainer}>

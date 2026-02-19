@@ -3,32 +3,16 @@ import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-
 
 import DashboardPage from './pages/dashboardPage';
 import StockPage from './pages/stockPage';
-import TranscationsPage from './pages/transacationsPage';
+// import TranscationsPage from './pages/transacationsPage';
 import AuthenticationPage from './pages/authenticationPage';
 
 import ProtectedRoute from './routes/ProtectedRoute';
 import WithdrawalPage from './pages/withdrawalPage';
 import AdminStockPage from './pages/admin/AdminStockPage';
-import { useEffect } from 'react';
+import TransactionsPage from './pages/transactionsPage';
 
 
 function App() {
-
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-
-  const fetchData = async () => {
-    const res = await fetch("https://api-najddsqtfa-uc.a.run.app/spoolstock");
-
-    const data = await res.text();
-
-    alert(data);
-  }
-
-
   return (
     <Router>
       <div className="App">
@@ -53,7 +37,7 @@ function App() {
             path="/transcations" 
             element={
               <ProtectedRoute>
-                <TranscationsPage />
+                <TransactionsPage />
               </ProtectedRoute>
             } 
           />
@@ -68,14 +52,14 @@ function App() {
           />
 
 
-          <Route 
+          {/* <Route 
             path="/admin/stock" 
             element={
               <ProtectedRoute>
                 <AdminStockPage />
               </ProtectedRoute>
             } 
-          />
+          /> */}
 
 
           {/* Public routes */}

@@ -67,11 +67,10 @@ const StockComponent = () => {
                             <table>
                                 <thead>
                                     <tr className={styles.tableHeader}>
-                                    <th></th>
-                                    <th className={styles.distributorRowTh}>Leverantör</th>
-                                    <th>Beskrivning</th>
-                                    <th>Vikt</th>
-                                    <th>Antal</th>
+                                        <th className={styles.distributorRowTh}>Leverantör</th>
+                                        <th>Beskrivning</th>
+                                        <th>Vikt</th>
+                                        <th>Antal</th>
                                     </tr>
                                 </thead>
                     
