@@ -82,13 +82,14 @@ const StockComponent = () => {
                 </div>
 
                 <div className={styles.middleContainer}>
+                  <p>Antal tillgängliga: {choosenProduct[0]?.quantity}</p>
+
                   <img
                     alt=""
                     src={choosenProduct[0]?.productImageUrl}
                   />
                 </div>
                 <div className={styles.footerContainer}>
-
                 </div>    
               </div>
             ) : (
