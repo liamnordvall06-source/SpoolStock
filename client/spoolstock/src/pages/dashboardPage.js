@@ -16,11 +16,11 @@ const DashboardPage = () => {
     return (
         <div className={styles.mainContainer}>
             <HeaderComponent />
-
+{/* 
             <Alert className={styles.notification} severity="warning">
-                <AlertTitle>Dags att fylla på</AlertTitle>
-                Flera av dina material börjar ta slut. Kontakta oss för att boka <br /> en leverans
-            </Alert>
+                <AlertTitle>Ditt lager börjar ta slut!</AlertTitle>
+                Flera av dina material börjar ta slut. Kontakta oss för att boka <br /> en leverans.
+            </Alert> */}
 
             <div className={styles.innerContainer}>
                 <SummaryComponent />

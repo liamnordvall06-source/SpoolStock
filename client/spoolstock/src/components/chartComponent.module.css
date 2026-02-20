@@ -5,6 +5,7 @@
   border-radius: 20px;
   height: 100%;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .statisticsInnerContainer {
@@ -161,7 +162,7 @@
 
 @media (max-width: 1500px) {
     .chartContainer {
-        height: auto;
+        height: 380px;
     }
 
     .statisticsContainer {
