@@ -1,4 +1,3 @@
-/* Keep main layout */
 .mainContainer {
     width: 100%;
     height: 120px;
@@ -36,19 +35,19 @@
     display: flex;
     align-items: center;
     position: relative;
-    justify-content: space-between; /* keeps logo left, links right */
+    justify-content: space-between; 
 }
 
 .headerContainer img {
     width: 180px;
-    max-width: 30%; /* responsive without changing height */
-    position: relative; /* remove absolute to keep layout */
+    max-width: 30%; 
+    position: relative; 
 }
 
 .rightContainer {
-    width: auto; /* remove 100% to avoid overlap */
+    width: auto; 
     display: flex;
-    justify-content: flex-end; /* keep links on right */
+    justify-content: flex-end; 
 }
 
 .linksContainer {

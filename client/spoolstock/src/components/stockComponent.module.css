@@ -1,7 +1,7 @@
 .stockContainer {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
   width: 100%;
-  height: 100%;                 /* ✅ restore height so inner scrolling can work */
+  height: 100%;
   background-color: #ffffff;
   border-radius: 20px;
   padding: 20px;
@@ -11,16 +11,14 @@
 
   box-sizing: border-box;
   overflow: hidden;
-
-  min-height: 0;                /* ✅ critical for flex scrolling */
+  min-height: 0;
 }
 
 .stockInnerContainer {
   display: flex;
   flex-direction: column;
-
-  flex: 1;                      /* ✅ critical */
-  min-height: 0;                /* ✅ critical */
+  flex: 1;
+  min-height: 0;
 }
 
 .stockInnerContainer h1 {
@@ -34,13 +32,12 @@
   margin: 0;
 }
 
-/* --- Scroll area --- */
-.stockContainer .stockTableWrapper {
+/* --- LIST VIEW SCROLL --- */
+.stockTableWrapper {
   flex: 1;
-  min-height: 0;                /* ✅ critical */
+  min-height: 0;
   overflow-y: auto;
-
-  overscroll-behavior: contain; /* optional: prevents body scroll chaining */
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -54,17 +51,17 @@
   margin: 0px;
 }
 
-.stockContainer .tableHeader {
+.tableHeader {
   position: sticky;
   top: 10px;
   z-index: 1;
-  background: #F6F8FA;
+  background: #f6f8fa;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
   text-align: left;
   height: 50px;
 }
 
-.stockContainer .tableHeader::before {
+.tableHeader::before {
   content: "";
   position: absolute;
   top: -10px;
@@ -101,57 +98,143 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-@media (max-width: 1000px) {
-  .distributorRowTh {
-    display: none;
-  }
-
-  .stockContainer .td button {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-  }
+/* =========================
+   VIEW SWITCH ANIMATION
+========================= */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
 }
 
+.view {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 
+.exit {
+  animation: viewOut 220ms cubic-bezier(.21,1.02,.73,1) forwards;
+}
 
+.enter {
+  animation: viewIn 420ms cubic-bezier(.21,1.02,.73,1) forwards;
+}
 
-.stockInnerContainer .headerContainer {
+.enter > * {
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(1px);
+  animation: childIn 420ms cubic-bezier(.21,1.02,.73,1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+.enter > *:nth-child(1) { animation-delay: 0ms; }
+.enter > *:nth-child(2) { animation-delay: 60ms; }
+.enter > *:nth-child(3) { animation-delay: 120ms; }
+.enter > *:nth-child(4) { animation-delay: 180ms; }
+.enter > *:nth-child(5) { animation-delay: 240ms; }
+
+@keyframes viewOut {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to   { opacity: 0; transform: translateY(-6px) scale(0.99); filter: blur(1px); }
+}
+
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); filter: blur(1px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes childIn {
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exit, .enter, .enter > * { animation: none !important; }
+}
+
+/* =========================
+   PREVIEW VIEW (FIXED)
+========================= */
+.productPreviewContainer {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+/* header sticky top */
+.previewHeader {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-bottom: 10px;
 }
 
-.stockInnerContainer .leftHeaderContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stockInnerContainer .productPreviewContainer img {
-  width: 250px;
-  border-radius: 20px;
+/* scroll area */
+.previewContent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 14px;
   margin-top: 20px;
 }
 
-.productPreviewContainer .shopBtn {
-  width: 40px;
-  height: 40px;
+.middleContainer {
   display: flex;
-  justify-content: center;
+  gap: 30px;
+}
+
+.productPreviewContainer .imageContainer {
+  position: sticky;
+  top: 0;
+  width: 330px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(207, 207, 207, 0.9);
+  padding-right: 30px;
+}
+
+.productPreviewContainer img {
+  width: 330px;
+  height: 330px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.imageContainer h1 {
+  margin: 0;
+}
+
+.imageContainer p {
+  margin: 20px 0 0 0;
+}
+
+/* back btn */
+.backBtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  display: flex;
   align-items: center;
-  background-color: #4294FF;
-  border-radius: 50%;
-  font-size: 15px;
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  justify-content: center;
+
+  font-size: 22px;
 }
 
-.productPreviewContainer {
-  min-height: 100%;
-}
-
-
+/* shop button */
 .shopBtn {
   width: 40px;
   height: 40px;
@@ -165,11 +248,10 @@
   border-radius: 50%;
   color: #ffffff;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
   overflow: hidden;
   white-space: nowrap;
-
   padding: 0;
   gap: 0;
 
@@ -203,7 +285,7 @@
 }
 
 .shopBtn:hover {
-  width: 165px;
+  width: 170px;
   border-radius: 20px;
   justify-content: flex-start;
   padding-left: 12px;
@@ -217,85 +299,132 @@
   margin-left: 8px;
 }
 
-.productPreviewContainer .footerContainer {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  height: 50px;
+/* footer controls */
+.footerContainer .withdrawalBtn {
+  width: 150px;
+  height: 45px;
+  border-radius: 50px;
+  border: 2px solid #4294FF;
+  background-color: #ffffff;
+  color: #4294FF;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
 }
 
-.productPreviewContainer .backBtn {
-  width: 20px;
-  height: 20px;
-  padding: 0;
+.footerContainer input {
+  width: 250px;
+  height: 45px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.15);
+  padding: 0 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+.productPreviewContainer .headerLeftContainer {
   display: flex;
-  justify-content: ceter;
   align-items: center;
-  font-size: 18px;
+}
+
+.productPreviewContainer .withdrawalContainer {
+  display: flex;
+  gap: 10px;
+}
+
+.productPreviewContainer .withdrawalBtn {
+  width: 150px;
+  border-radius: 20px;
+  color: #ffffff;
+  background-color: #4294FF;
+  height: 40px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  transition: 0.2s ease-in-out;
+}
+
+.productPreviewContainer .withdrawalBtn:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
 
 
-
-
-/* =========================================
-   View switch animation (list <-> preview)
-   ========================================= */
-
-/* Wrap the two views (list vs preview) in a "stage" */
-.stage {
-  position: relative;
-  flex: 1;          /* ✅ critical */
-  min-height: 0;    /* ✅ critical */
+.productPreviewContainer input {
+  height: 40px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
-/* Base for both views */
-.view {
-  height: 100%;
-  min-height: 0;    /* ✅ critical */
-
-  display: flex;          /* ✅ make it a column so the scroll area can flex */
-  flex-direction: column; /* ✅ */
+.productPreviewContainer input:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.35);
 }
 
-/* Exit animation */
-.exit {
-  animation: viewOut 220ms cubic-bezier(.21,1.02,.73,1) forwards;
+
+.productPreviewContainer h2 {
+  font-size: 16px;
+  margin: 20px 0 20px 0;
+  font-weight: 500;
 }
 
-/* Enter animation */
-.enter {
-  animation: viewIn 420ms cubic-bezier(.21,1.02,.73,1) forwards;
+.stockText {
+  margin: 10px 0;
+  font-size: 14px;
 }
 
-/* Optional: stagger children on enter */
-.enter > * {
-  opacity: 0;
-  transform: translateY(10px);
-  filter: blur(1px);
-  animation: childIn 420ms cubic-bezier(.21,1.02,.73,1) forwards;
-  will-change: transform, opacity, filter;
+.previewText h1 {
+  font-size: 20px;
+  margin: 0 0 10px 0;
 }
 
-.enter > *:nth-child(1) { animation-delay: 0ms; }
-.enter > *:nth-child(2) { animation-delay: 60ms; }
-.enter > *:nth-child(3) { animation-delay: 120ms; }
-.enter > *:nth-child(4) { animation-delay: 180ms; }
-.enter > *:nth-child(5) { animation-delay: 240ms; }
-
-@keyframes viewOut {
-  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-  to   { opacity: 0; transform: translateY(-6px) scale(0.99); filter: blur(1px); }
+.previewText {
+  margin-right: 20px;
 }
 
-@keyframes viewIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.99); filter: blur(1px); }
-  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+.downloadDataSheetButton {
+  width: 220px;
+  background-color: #ffffff;
+  border: 1px solid #424242;
+  height: 40px;
+  color: #424242;
+  border-radius: 20px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  margin-bottom: 100px;
+  transition: 0.2s ease-in;
 }
 
-@keyframes childIn {
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+.downloadDataSheetButton:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .exit, .enter, .enter > * { animation: none !important; }
+.downloadDataSheetButton:active {
+  box-shadow: 0 2px 4px inset rgba(0,0,0,0.35);
+}
+
+.productSpecificationContainer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(207, 207, 207, 0.9);
+}
+
+.productSpecificationContainer p {
+  padding: 10px 0;
+  font-size: 16px;
+}
+
+.productSpecificationContainer .metafieldDescription {
+  font-weight: 300;
+}
+
+.productSpecificationContainer .metafieldValue {
+  font-weight: 500;
+}
+
+.productPreviewContainer .variantDescription {
+  font-size: 16px;
+  font-weight: 300;
+}
+
+@media (max-width: 1000px) {
+  .distributorRowTh {
+    display: none;
+  }
 }
