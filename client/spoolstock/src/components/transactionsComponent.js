@@ -38,9 +38,10 @@ const TransactionsComponent = () => {
                         <thead>
                             <tr className={styles.tableHeader}>
                                 <th className={styles.transcationIdContainer}>Transaktion ID</th>
+                                <th>Uttag gjort av</th>
                                 <th>Datum</th>
                                 <th>Artikel</th>
-                                <th>Antal uttagna</th>
+                                <th>Antal</th>
                                 <th>Typ</th>
                             </tr>
                         </thead>
@@ -65,9 +66,26 @@ const TransactionsComponent = () => {
                                         <tr key={transaction.id}>
                                             <td ></td>
                                             <td className={styles.transcationIdContainer}>#{transaction.id}</td>
+                                            <td>
+                                            <div className={styles.cellWithImage}>
+                                                <img
+                                                className={styles.profileImage}
+                                                src={transaction.customerProfileImage}
+                                                />
+                                                <p>{transaction.customerName}</p>
+                                            </div>
+                                            </td>
                                             <td>{dateStr}</td>
-                                            <td>{transaction.productName}</td>
-                                            <td>{transaction.quantity + " ST"}</td>
+                                            <td>
+                                            <div className={styles.cellWithImage}>
+                                                <img
+                                                className={styles.productImage}
+                                                src={transaction?.image?.url || transaction?.featuredImage?.url}
+                                                />
+                                                <p>{transaction.productName}</p>
+                                            </div>
+                                            </td>
+                                            <td>{transaction.quantity}</td>
                                             <td>{transaction.type === "deposite" ? "Insättning" : "Uttag"}</td>
                                         </tr>
                                         );

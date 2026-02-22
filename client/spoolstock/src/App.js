@@ -10,6 +10,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import WithdrawalPage from './pages/withdrawalPage';
 import AdminStockPage from './pages/admin/AdminStockPage';
 import TransactionsPage from './pages/transactionsPage';
+import ProductCataloguePage from './pages/productCataloguePage';
 
 
 function App() {
@@ -47,6 +48,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <WithdrawalPage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/catalogue" 
+            element={
+              <ProtectedRoute>
+                <ProductCataloguePage />
               </ProtectedRoute>
             } 
           />

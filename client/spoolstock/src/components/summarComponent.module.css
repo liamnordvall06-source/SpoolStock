@@ -175,3 +175,34 @@
     display: none;
   }
 }
+
+
+.valueText {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.growthContainerNegative,
+.growthContainerPositive {
+   display: flex;
+  align-items: start;
+  justify-content: center;
+  gap: 5px;
+  font-size: 18px;
+  margin: 0 20px 20px 0;
+}
+
+
+.growthContainerPositive p,
+.growthContainerNegative p {
+    margin: 0;
+}
+
+.growthContainerPositive {
+    color: #4294FF;
+}
+
+.growthContainerNegative {
+  color: #ff0000;
+}

@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import styles from "./stockComponent.module.css";
 import { FaShoppingCart } from "react-icons/fa";
-import { IoIosArrowBack } from "react-icons/io";
+import { IoIosArrowBack, IoMdAdd } from "react-icons/io";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 
 const StockComponent = () => {
+  const auth = getAuth();
+
   const [withdrwalPopup, setWithdrawalPopup] = useState(false);
   const [renderedPopup, setRenderedPopup] = useState(false);
   const [animClass, setAnimClass] = useState(styles.enter);
@@ -14,14 +17,14 @@ const StockComponent = () => {
   const [stock, setStock] = useState([]);
   const [quantity, setQuantity] = useState(0);
 
-
-
+  const [customerId, setCustomerId] = useState(null);
   const [variantData, setVariantData] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [errorText, setErrorText] = useState("");
   const API_BASE = "https://api-najddsqtfa-uc.a.run.app";
   const SHOP = "brandit3d.myshopify.com";
 
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (choosenProduct) {
@@ -71,6 +74,10 @@ const StockComponent = () => {
     setWithdrawalPopup(true);
   };
 
+  const handleRedirectProductCatalogue = () => {
+    navigate("/catalogue")
+  }
+
   const handleOnClose = () => {
     setWithdrawalPopup(false);
   };
@@ -104,33 +111,50 @@ const StockComponent = () => {
 
   }
 
+const handleWithdrawal = async () => {
+  try {
+    const user = auth.currentUser;
 
-  const handleWithdrawal = async () => {
-    try {
-            const productId = choosenProduct?.id;
-
-            const jsonObj = {
-                quantity,
-                productId
-            }
-
-            const CID = localStorage.getItem("CID");
-
-            const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/${CID}/stock`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(jsonObj)
-            })
-
-            const data = await response.json();
-            await fetchStock();
-            
-            setWithdrawalPopup(false);
-
-        } catch (e) {
-            console.log(e.message);
-        }
+    if (!user) {
+      console.log("Not signed in");
+      return;
     }
+
+    const customerId = user.uid; // ✅ guaranteed now
+    const productId = choosenProduct?.id;
+    const companyId = localStorage.getItem("CID");
+
+    const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/stock`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-customer-id": customerId,
+        "x-company-id": companyId,
+        "x-quantity": String(quantity),
+        "x-product-id": productId,
+        "x-customer-image": user.photoURL || "",
+      },
+    });
+
+    const data = await response.json();
+    console.log(data);
+
+    await fetchStock();
+    setWithdrawalPopup(false);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+/*
+productDistributor
+productImageUrl
+productName
+productOriginalUrl
+productWeight
+quantity
+shopifyId
+*/
 
   return (
     <div className={styles.stockContainer}>
@@ -164,7 +188,7 @@ const StockComponent = () => {
                   <div className={styles.middleContainer}>
                     <div className={styles.imageContainer}>
 
-                      <img alt={variantData?.productName} src={variantData?.imageUrl || null} />
+                      <img alt={variantData?.productName} src={variantData?.imageUrl || variantData?.featuredImage} />
 
                       <h2>Gör uttag</h2>
 
@@ -189,7 +213,7 @@ const StockComponent = () => {
                       <h1>Specifikationer</h1>
 
                       {variantData?.metafields?.nodes?.map((metafield) => {
-                        if (metafield.key != "datasheet") {
+                        if (metafield.key != "datasheet" && metafield.value) {
                           return (
                             <div className={styles.productSpecificationContainer}>
                               <p className={styles.metafieldDescription}>{metafield.definition.description}</p>
@@ -199,8 +223,9 @@ const StockComponent = () => {
                         }
                       })}
                       <br/>
-                      <h1>Datablad</h1>
-                      <button className={styles.downloadDataSheetButton} onClick={() => handleRedirectDatasheet()}>Ladda ner datablad</button>
+                      <h1 className={styles.datasheetTitle}>Produktdatablad</h1>
+                      <p className={styles.datasheetText}>Ta del av produktens fullständiga datablad.</p>
+                      <button className={styles.downloadDataSheetButton} onClick={() => handleRedirectDatasheet()}><p>Ladda ner datablad</p></button>
                       <br />
                     </div>
                   </div>
@@ -210,8 +235,21 @@ const StockComponent = () => {
               </div>
             ) : (
               <>
-                <h1>Lagersaldon</h1>
-                <p>Tryck på kortet för att göra uttag</p>
+
+                <div className={styles.stockHeaderContainer}>
+                  <div>
+                    <h1>Lagersaldon</h1>
+                    <p>Tryck på kortet för att göra uttag</p>
+                  </div>
+                    <button
+                    className={styles.shopBtn}
+                    aria-label="Lägg till artiklar"
+                    onClick={handleRedirectProductCatalogue}
+                  >
+                    <IoMdAdd />
+                  </button>
+                </div>
+             
 
                 <div className={styles.stockTableWrapper}>
                   <table>

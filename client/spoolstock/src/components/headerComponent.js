@@ -3,10 +3,15 @@ import styles from "./headerComponent.module.css";
 import BrandLogo from "../assets/BlackLogo.png"
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { app } from "../middleware/firebase";
+import { useNavigate } from "react-router-dom";
+
 
 const auth = getAuth(app);
 
 const HeaderComponent = () => {
+
+    const navigate = useNavigate();
+
     const [user, setUser] = useState(null);
 
     const handleSignout = async () => {
@@ -24,6 +29,10 @@ const HeaderComponent = () => {
         return () => unsubscribe();
     }, []);
 
+    const handleRedirect = () => {
+        navigate("/");
+    }
+
     return (
         <div className={styles.mainContainer}>
             <div className={styles.bannerContainer}>
@@ -31,7 +40,7 @@ const HeaderComponent = () => {
             </div>
             <div className={styles.headerContainer}>
                 <div className={styles.innerContainer}>
-                    <img src={BrandLogo} />
+                    <img onClick={handleRedirect} src={BrandLogo} />
                      <div className={styles.rightContainer}>
                         {user && 
                             <ul className={styles.linksContainer}>

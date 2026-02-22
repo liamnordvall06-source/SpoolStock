@@ -60,7 +60,7 @@
 
   .middleContainer {
     flex-direction: column;
-    height: 1070px;
+    height: 1170px;
   }
 
   .transactionsWrapper {
@@ -74,7 +74,7 @@
 
   .stockWrapper {
     width: 100%;
-    height: 500px;
+    height: 600px;
   }
 }
 

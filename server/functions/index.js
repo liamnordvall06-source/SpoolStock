@@ -15,6 +15,10 @@ app.use(express.json());
 
 
 
+const SHOP = "qiiigm-di.myshopify.com";
+const SHOPIFY_ADMIN_TOKEN = "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";
+const API_VERSION = "2024-10";
+
 //* OPEN REQUESTS */
 
 
@@ -81,47 +85,119 @@ app.get(("/company/:companyId/transactions"), async (req, res) => {
     }
 })
 
-app.post("/company/:companyId/stock", async (req, res) => {
+app.post("/company/stock", async (req, res) => {
   try {
-    const { companyId } = req.params;
-    const { productId, quantity } = req.body; 
 
-    if (!productId || quantity == null) {
-      return res.status(400).json({ error: "productId and quantity are required" });
+    const customerId = req.headers["x-customer-id"];
+    const companyId = req.headers["x-company-id"];
+    const productId = req.headers["x-product-id"];
+    const quantity = parseInt(req.headers["x-quantity"]);
+    const customerProfileImage = req.headers["x-customer-image"] || "";
+
+    if (!customerId || !companyId || !productId || !quantity) {
+        return res.status(400).json({ error: "Their are missing fields in the request" });
     }
 
     const productRef = db.collection("products").doc(productId);
     const productDoc = await productRef.get();
 
     if (!productDoc.exists) {
-      return res.status(404).json({ error: "Product not found" });
+        return res.status(404).json({ error: "Product was not found in database" });
     }
 
     const productData = productDoc.data();
 
+    const shopifyId = productData.shopifyId;
+    const productWeight = productData.productWeight;
+
+
+    const customerRef = db.collection("customers").doc(customerId);
+    const customerDoc = await customerRef.get();
+
+    if (!customerDoc.exists) {
+        return res.status(404).json({ error: "Customer was not found in database" });
+    }
+
+    const customerData = customerDoc.data();
+
+    const customerName = customerData.name;
+
+    const normalizedVariantGid = shopifyId.startsWith("gid://")
+        ? shopifyId
+        : `gid://shopify/ProductVariant/${shopifyId}`;
+
+    const query = `
+      query VariantById($id: ID!) {
+        productVariant(id: $id) {
+          id
+          title
+          price
+          displayName
+          image { url altText }
+          product {
+            id
+            title
+            description
+            featuredImage { url altText }
+            images(first: 1) { edges { node { url altText } } }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(
+      `https://${SHOP}/admin/api/${API_VERSION}/graphql.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          query,
+          variables: { id: normalizedVariantGid },
+        }),
+      }
+    );
+
+    const json = await response.json();
+    const variant = json?.data?.productVariant;
+
     const stockRef = db.collection("company").doc(companyId).collection("stock").doc(productId);
     const stockDoc = await stockRef.get();
 
-    if (stockDoc.exists) {
-      const newQuantity = stockDoc.data().quantity - parseInt(quantity); 
-
-      if (newQuantity < 0) {
-        return res.status(400).json({ error: "Insufficient stock to remove" });
-      }
-
-      await stockRef.update({ quantity: newQuantity });
+    if (!stockDoc.exists) {
+        return res.status(404).json({ error: "Customer stock was not found in database" });
     }
 
+    const stockData = stockDoc.data();
+
+    const newQuantity = parseInt(stockData.quantity) - parseInt(quantity); 
+
+    if (newQuantity < 0) {
+      return res.status(400).json({ error: "Quantity can not be under 0" });
+    }
+
+    await stockRef.update({ quantity: newQuantity });
+
+
     const transactionsRef = db.collection("company").doc(companyId).collection("transactions");
+
     await transactionsRef.add({
+      date: new Date(),
+      productCost: variant.price,
       productId,
-      productName: productData.productName,
+      shopifyId,
+      productName: variant.displayName,
+      productWeight,
       quantity,
       type: "withdrawal",
-      productWeight: productData.productWeight,
-      date: new Date(),
-      productCost: productData.productCost 
-    });
+      image: variant.image,
+      featuredImage: variant.product.featuredImage,
+      customerName, 
+      customerId,    
+      customerProfileImage
+    })
 
     return res.json({ message: "Stock and transaction updated successfully" });
 
@@ -130,6 +206,7 @@ app.post("/company/:companyId/stock", async (req, res) => {
     return res.status(500).json({ error: e.message });
   }
 });
+
 
 app.get(("/company/:companyId/turnover"), async (req, res) => {
     try {
@@ -456,203 +533,8 @@ app.get("/shopify/callback", async (req, res) => {
 });
 
 
-// app.get("/shopify/variants", async (req, res) => {
-//   try {
-//     const shop = req.query.shop;
-//     const customerId = req.query.customerId;
-
-//     if (!shop) return res.status(400).send("Missing shop");
-//     if (!customerId) return res.status(400).send("Missing customerId");
-
-//     const customerDoc = await db.collection("customers").doc(customerId).get();
-//     if (!customerDoc.exists) return res.status(404).send("Customer not found");
-
-//     const customerData = customerDoc.data();
-//     const token = customerData?.shopify?.accessToken;
-//     if (!token) return res.status(401).send("Not authenticated with Shopify");
-
-//     const API_VERSION = "2024-10";
-
-//     // Hämta varianter direkt (tag:spoolstock på PRODUKT-nivå)
-//     const query = `
-//       query Variants($first: Int! ) {
-//         productVariants(first: $first, query: "tag:spoolstock") {
-//           edges {
-//             node {
-//               id
-//               title
-//               sku
-//               price
-//               inventoryQuantity
-//               availableForSale
-
-//               image {
-//                 url
-//                 altText
-//               }
-
-//               product {
-//                 id
-//                 title
-
-//                 featuredImage {
-//                   url
-//                   altText
-//                 }
-//               }
-
-//               inventoryItem {
-//                 tracked
-//               }
-//             }
-//           }
-//         }
-//       }`;
 
 
-//     const response = await fetch(`https://${shop}/admin/api/${API_VERSION}/graphql.json`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         "X-Shopify-Access-Token": token,
-//       },
-//       body: JSON.stringify({
-//         query,
-//         variables: { first: 250 }, // justera vid behov
-//       }),
-//     });
-
-//     const data = await response.json();
-
-//     // Shopify GraphQL kan returnera errors även med 200 OK
-//     if (data.errors?.length) {
-//       return res.status(502).json({ errors: data.errors });
-//     }
-
-//     const edges = data?.data?.productVariants?.edges ?? [];
-
-//         // Platta ut till "varianter istället"
-//     const variants = edges.map(({ node }) => ({
-//       variantId: node.id,
-
-//       // variant namn
-//       name: `${node.product?.title ?? ""} - ${node.title ?? ""}`.trim(),
-
-//       // produkt info
-//       productId: node.product?.id ?? null,
-//       productTitle: node.product?.title ?? null,
-
-//       // 🆕 produktbild
-//       productImage: node.product?.featuredImage?.url ?? null,
-//       productImageAlt: node.product?.featuredImage?.altText ?? null,
-
-//       // variantbild (fallback)
-//       image: node.image?.url ?? null,
-//       imageAlt: node.image?.altText ?? null,
-
-//       sku: node.sku ?? null,
-//       price: node.price ?? null,
-//       inventoryQuantity: node.inventoryQuantity ?? null,
-//       availableForSale: node.availableForSale ?? null,
-//       tracked: node.inventoryItem?.tracked ?? null,
-//     }));
-
-
-//     return res.json({ variants });
-//   } catch (e) {
-//     console.error(e);
-//     return res.status(500).json({ error: e.message });
-//   }
-// });
-
-
-
-// app.get("/shopify/variants", async (req, res) => {
-//   try {
-//     const variantId = req.headers["x-variant-id"];
-//     const shop = req.headers["x-shop"];
-//     const customerId = req.headers["x-customer-id"];
-
-//     if (!shop) return res.status(400).send("Missing shop");
-//     if (!customerId) return res.status(400).send("Missing customerId");
-//     if (!variantId) return res.status(400).send("Missing variantId");
-
-//     const customerDoc = await db.collection("customers").doc(customerId).get();
-//     if (!customerDoc.exists) return res.status(404).send("Customer not found");
-
-//     const token = customerDoc.data()?.shopify?.accessToken;
-//     if (!token) return res.status(401).send("Not authenticated with Shopify");
-
-//     const API_VERSION = "2024-10";
-
-//     const normalizedVariantGid = variantId.startsWith("gid://")
-//       ? variantId
-//       : `gid://shopify/ProductVariant/${variantId}`;
-
-//     const query = `
-//       query VariantById($id: ID!) {
-//         productVariant(id: $id) {
-//           id
-//           title
-//           sku
-//           inventoryQuantity
-//           image { url altText }
-//           product {
-//             id
-//             title
-//             featuredImage { url altText }
-//             images(first: 1) { edges { node { url altText } } }
-//           }
-//         }
-//       }
-//     `;
-
-//     const response = await fetch(
-//       `https://${shop}/admin/api/${API_VERSION}/graphql.json`,
-//       {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           "X-Shopify-Access-Token": token,
-//         },
-//         body: JSON.stringify({
-//           query,
-//           variables: { id: normalizedVariantGid },
-//         }),
-//       }
-//     );
-
-//     const json = await response.json();
-//     const variant = json?.data?.productVariant;
-
-//     if (!variant) return res.status(404).send("Variant not found");
-
-//     const imageUrl =
-//       variant?.image?.url ||
-//       variant?.product?.featuredImage?.url ||
-//       variant?.product?.images?.edges?.[0]?.node?.url ||
-//       "";
-
-//     return res.json({
-//       variantId: variant.id,
-//       productId: variant.product?.id,
-//       productName: variant.product?.title,
-//       variantTitle: variant.title,
-//       sku: variant.sku,
-//       stock: variant.inventoryQuantity,
-//       imageUrl,
-//     });
-//   } catch (e) {
-//     console.error(e);
-//     res.status(500).json({ error: e.message });
-//   }
-// });
-
-
-
-
-const SHOP = "qiiigm-di.myshopify.com";
-const SHOPIFY_ADMIN_TOKEN = "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";
 
 app.get("/shopify/variant", async (req, res) => {
   try {
@@ -662,9 +544,10 @@ app.get("/shopify/variant", async (req, res) => {
     const API_VERSION = "2024-10";
 
     const normalizedVariantGid = variantId.startsWith("gid://")
-      ? variantId
-      : `gid://shopify/ProductVariant/${variantId}`;
+        ? variantId
+        : `gid://shopify/ProductVariant/${variantId}`;
 
+  
     const query = `
       query VariantById($id: ID!) {
         productVariant(id: $id) {
