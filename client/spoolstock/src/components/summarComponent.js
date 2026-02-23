@@ -3,11 +3,13 @@ import styles from "./summarComponent.module.css";
 import { TbPackage, TbCurrencyDollar, TbHandStop, TbChartAreaLine } from "react-icons/tb";
 import { FaArrowTrendDown, FaArrowTrendUp } from "react-icons/fa6";
 
-const SummaryComponent = () => {
+const SummaryComponent = ({ reloadTrigger }) => {
   const [transactions, setTransactions] = useState([]);
 
-  const fetchTransactions = async (companyId) => {
+  const fetchTransactions = async () => {
     try {
+      const companyId = localStorage.getItem("CID");
+
       const response = await fetch(
         `https://api-najddsqtfa-uc.a.run.app/company/${companyId}/transactions`
       );
@@ -22,9 +24,12 @@ const SummaryComponent = () => {
 
   // 1) Fetch en gång vid mount
   useEffect(() => {
-    const CID = localStorage.getItem("CID");
-    if (CID) fetchTransactions(CID);
+    fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [reloadTrigger]);
 
   // Hjälpfunktioner
   const toMonthKey = (dateObj) => `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;

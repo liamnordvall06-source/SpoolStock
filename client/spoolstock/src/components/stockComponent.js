@@ -6,7 +6,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 
-const StockComponent = () => {
+const StockComponent = ({ updateDashboard  }) => {
   const auth = getAuth();
 
   const [withdrwalPopup, setWithdrawalPopup] = useState(false);
@@ -32,11 +32,13 @@ const StockComponent = () => {
 
       return onAuthStateChanged(auth, async (user) => {
         try {
-          const url = `${API_BASE}/shopify/variant`;
+          const companyId = localStorage.getItem("CID");
+
+          const url = `${API_BASE}/company/${companyId}/article`;
 
           const response = await fetch(url, {
             headers: {
-              "x-variant-id": choosenProduct?.shopifyId
+              "x-shopify-id": choosenProduct
             }
           });
 
@@ -55,22 +57,27 @@ const StockComponent = () => {
 
 
 
-  const fetchStock = async (companyId) => {
+  const fetchStock = async () => {
     try {
+
+      const companyId = localStorage.getItem("CID");
+
       const response = await fetch(
         `https://api-najddsqtfa-uc.a.run.app/company/${companyId}/stock`
       );
       if (!response.ok) return;
       const data = await response.json();
-      setStock(Array.isArray(data) ? data : []);
+
+      console.log(data);
+      setStock(data);
+
     } catch (e) {
       console.log("Fetch stock failed:", e.message);
     }
   };
 
-  const handleWithdrawalShow = (productId) => {
-    const picked = stock.find((item) => item.id === productId) || null;
-    setChoosenProduct(picked);
+  const handleWithdrawalShow = (productId) => {    
+    setChoosenProduct(productId);
     setWithdrawalPopup(true);
   };
 
@@ -83,8 +90,7 @@ const StockComponent = () => {
   };
 
   useEffect(() => {
-    const companyId = localStorage.getItem("CID");
-    fetchStock(companyId);
+    fetchStock();
   }, []);
 
   useEffect(() => {
@@ -100,9 +106,8 @@ const StockComponent = () => {
   }, [withdrwalPopup]);
 
 
-  const handleRedirect = () => {
-    if (!choosenProduct?.productOriginalUrl) return;
-    window.location.href = choosenProduct.productOriginalUrl;
+  const handleRedirect = (url) => {
+    window.location.href = url;
   };
 
   const handleRedirectDatasheet = () => {
@@ -120,8 +125,8 @@ const handleWithdrawal = async () => {
       return;
     }
 
-    const customerId = user.uid; // ✅ guaranteed now
-    const productId = choosenProduct?.id;
+    const customerId = user.uid;
+    const shopifyId = choosenProduct;
     const companyId = localStorage.getItem("CID");
 
     const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/stock`, {
@@ -131,7 +136,7 @@ const handleWithdrawal = async () => {
         "x-customer-id": customerId,
         "x-company-id": companyId,
         "x-quantity": String(quantity),
-        "x-product-id": productId,
+        "x-shopify-id": shopifyId,
         "x-customer-image": user.photoURL || "",
       },
     });
@@ -140,21 +145,12 @@ const handleWithdrawal = async () => {
     console.log(data);
 
     await fetchStock();
+    updateDashboard();
     setWithdrawalPopup(false);
   } catch (e) {
     console.log(e);
   }
 };
-
-/*
-productDistributor
-productImageUrl
-productName
-productOriginalUrl
-productWeight
-quantity
-shopifyId
-*/
 
   return (
     <div className={styles.stockContainer}>
@@ -177,7 +173,7 @@ shopifyId
                   <button
                     className={styles.shopBtn}
                     aria-label="Extra Beställning"
-                    onClick={handleRedirect}
+                    onClick={() => handleRedirect(variantData?.variantUrl)}
                   >
                     <FaShoppingCart />
                   </button>
@@ -197,12 +193,12 @@ shopifyId
                         placeholder="Skriv in antal"
                         type="number"
                         value={quantity}
-                        onChange={(e) => setQuantity(choosenProduct?.quantity >= e.target.value && e.target.value)}
+                        onChange={(e) => setQuantity(parseInt(variantData?.quantity) >= e.target.value && e.target.value)}
                       />
-                        <button className={styles.withdrawalBtn} onClick={handleWithdrawal}>Gör uttag</button>
+                        <button className={styles.withdrawalBtn} onClick={() => handleWithdrawal()}>Gör uttag</button>
                       </div>
 
-                      <p className={styles.stockText}>Antal tillgängliga: {choosenProduct?.quantity} ST</p>
+                      <p className={styles.stockText}>Antal tillgängliga: {variantData?.quantity} ST</p>
 
                     </div>
                     <div className={styles.previewText}>
@@ -213,7 +209,7 @@ shopifyId
                       <h1>Specifikationer</h1>
 
                       {variantData?.metafields?.nodes?.map((metafield) => {
-                        if (metafield.key != "datasheet" && metafield.value) {
+                        if (metafield.key != "datasheet" && metafield.key != "weight" && metafield.value) {
                           return (
                             <div className={styles.productSpecificationContainer}>
                               <p className={styles.metafieldDescription}>{metafield.definition.description}</p>
@@ -223,6 +219,7 @@ shopifyId
                         }
                       })}
                       <br/>
+                      
                       <h1 className={styles.datasheetTitle}>Produktdatablad</h1>
                       <p className={styles.datasheetText}>Ta del av produktens fullständiga datablad.</p>
                       <button className={styles.downloadDataSheetButton} onClick={() => handleRedirectDatasheet()}><p>Ladda ner datablad</p></button>
@@ -263,20 +260,20 @@ shopifyId
                     </thead>
 
                     <tbody>
-                      {stock?.map((stockItem) => (
+                      {stock?.map((product) => (
                         <tr
-                          key={stockItem.id}
-                          onClick={() => handleWithdrawalShow(stockItem.id)}
+                          key={product.variantId}
+                          onClick={() => handleWithdrawalShow(product.variantId)}
                         >
                           <td>
-                            <img alt={stockItem.productName} src={stockItem.productImageUrl} />
+                            <img alt={product.variantName} src={product.variantImage ? product.variantImage : product.productImage} />
                           </td>
                           <td className={styles.distributorRowTh}>
-                            {stockItem.productDistributor}
+                            {product.vendor}
                           </td>
-                          <td>{stockItem.productName}</td>
-                          <td>{stockItem.productWeight} KG</td>
-                          <td>{stockItem.quantity} ST</td>
+                          <td>{product.variantName}</td>
+                          <td>{product.weight} KG</td>
+                          <td>{product.quantity} ST</td>
                         </tr>
                       ))}
                     </tbody>

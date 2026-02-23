@@ -55,11 +55,13 @@ const PulsingDot = ({ cx, cy }) => {
   );
 };
 
-const ChartComponent = () => {
+const ChartComponent = ({ reloadTrigger }) => {
   const [transactions, setTransactions] = useState([]);
 
-  const fetchTranscations = async (companyId) => {
+  const fetchTranscations = async () => {
     try {
+      const companyId = localStorage.getItem("CID");
+
       const response = await fetch(
         `https://api-najddsqtfa-uc.a.run.app/company/${companyId}/transactions`
       );
@@ -73,9 +75,12 @@ const ChartComponent = () => {
   };
 
   useEffect(() => {
-    const CID = localStorage.getItem("CID");
-    fetchTranscations(CID);
+    fetchTranscations();
   }, []);
+
+  useEffect(() => {
+    fetchTranscations();
+  }, [reloadTrigger])
 
   const chartData = useMemo(() => {
     const withdrawals = transactions.filter((t) => t.type === "withdrawal");

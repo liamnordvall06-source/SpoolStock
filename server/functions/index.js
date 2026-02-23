@@ -22,46 +22,109 @@ const API_VERSION = "2024-10";
 //* OPEN REQUESTS */
 
 
-app.get(("/company/:companyId"), async (req, res) => {
-    try {
-        const { companyId } = req.params();
 
-        const companyRef = db.collection("company").doc(companyId);
-        const companyDoc = await companyRef.get();
 
-        if (!companyDoc.exists) {
-            return res.status(404).json({ error: "Company not found" });
-        }
 
-        return res.json({ id: companyDoc.id, ...companyDoc.data() });
+app.get("/company/:companyId/stock", async (req, res) => {
+  try {
+    const { companyId } = req.params;
 
-    } catch (e) {
-        logger.error(e);
-        return res.status(500).json({ error: e.message });        
+    const stockRef = db.collection("company")
+      .doc(companyId)
+      .collection("stock");
+
+    const stockSnapshot = await stockRef.get();
+
+    if (stockSnapshot.empty) {
+      return res.status(404).json({ error: "No stock data found for this company" });
     }
-})
 
-app.get(("/company/:companyId/stock"), async (req, res) => {
-    try {
-        const { companyId } = req.params;
+    const stockMap = {};
+    const variantIds = stockSnapshot.docs.map(doc => {
+      const shopifyId = doc.id; 
+      stockMap[shopifyId] = doc.data().quantity; // ✅ numeriskt ID som nyckel
+      return `gid://shopify/ProductVariant/${shopifyId}`; // för GraphQL
+    });
 
-        const stockRef = db.collection("company").doc(companyId).collection("stock");
-
-        const stockSnapshot = await stockRef.get();
-
-        if (stockSnapshot.empty) {
-        return res.status(404).json({ error: "No stock data found for this company" });
+    const query = `
+      query getVariants($ids: [ID!]!) {
+        nodes(ids: $ids) {
+          ... on ProductVariant {
+            id
+            title
+            price
+            image {
+              url
+            }
+            product {
+              title
+              vendor
+              onlineStoreUrl
+              featuredImage {
+                url
+              }
+              metafield(namespace: "custom", key: "weight") {
+                value
+              }
+            }
+          }
         }
+      }
+    `;
 
-        const stockData = stockSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const response = await fetch(
+      `https://${SHOP}/admin/api/${API_VERSION}/graphql.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          query,
+          variables: { ids: variantIds },
+        }),
+      }
+    );
 
-        return res.json(stockData);
+    const result = await response.json();
 
-    } catch (e) {
-        logger.error(e);
-        return res.status(500).json({ error: e.message });        
+    if (result.errors) {
+      return res.status(500).json({ error: result.errors });
     }
-})
+
+  const products = result.data.nodes
+    .filter(Boolean)
+    .map(variant => {
+      const numericId = variant.id.split("/").pop(); // 123456789
+      const quantity = stockMap[numericId] || 0; // ✅ nu matchar nyckeln
+
+      return {
+        variantId: numericId,
+        productName: variant.product.title,
+        variantName:
+          variant.title === "Default Title"
+            ? variant.product.title
+            : `${variant.product.title} - ${variant.title}`,
+        vendor: variant.product.vendor,
+        price: variant.price,
+        quantity, // ✅ korrekt
+        productImage: variant.product.featuredImage?.url || null,
+        variantImage: variant.image?.url || null,
+        weight: variant.product.metafield?.value || null,
+        variantUrl: variant.product.onlineStoreUrl
+          ? `${variant.product.onlineStoreUrl}?variant=${numericId}`
+          : null
+      };
+    });
+
+    return res.json(products);
+
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
 
 app.get(("/company/:companyId/transactions"), async (req, res) => {
     try {
@@ -90,26 +153,13 @@ app.post("/company/stock", async (req, res) => {
 
     const customerId = req.headers["x-customer-id"];
     const companyId = req.headers["x-company-id"];
-    const productId = req.headers["x-product-id"];
+    const shopifyId = req.headers["x-shopify-id"]
     const quantity = parseInt(req.headers["x-quantity"]);
     const customerProfileImage = req.headers["x-customer-image"] || "";
 
-    if (!customerId || !companyId || !productId || !quantity) {
+    if (!customerId || !companyId || !shopifyId || !quantity) {
         return res.status(400).json({ error: "Their are missing fields in the request" });
     }
-
-    const productRef = db.collection("products").doc(productId);
-    const productDoc = await productRef.get();
-
-    if (!productDoc.exists) {
-        return res.status(404).json({ error: "Product was not found in database" });
-    }
-
-    const productData = productDoc.data();
-
-    const shopifyId = productData.shopifyId;
-    const productWeight = productData.productWeight;
-
 
     const customerRef = db.collection("customers").doc(customerId);
     const customerDoc = await customerRef.get();
@@ -140,6 +190,9 @@ app.post("/company/stock", async (req, res) => {
             description
             featuredImage { url altText }
             images(first: 1) { edges { node { url altText } } }
+            metafield(namespace: "custom", key: "weight") {
+                value
+            }
           }
         }
       }
@@ -163,7 +216,7 @@ app.post("/company/stock", async (req, res) => {
     const json = await response.json();
     const variant = json?.data?.productVariant;
 
-    const stockRef = db.collection("company").doc(companyId).collection("stock").doc(productId);
+    const stockRef = db.collection("company").doc(companyId).collection("stock").doc(shopifyId);
     const stockDoc = await stockRef.get();
 
     if (!stockDoc.exists) {
@@ -186,10 +239,9 @@ app.post("/company/stock", async (req, res) => {
     await transactionsRef.add({
       date: new Date(),
       productCost: variant.price,
-      productId,
       shopifyId,
       productName: variant.displayName,
-      productWeight,
+      productWeight: variant.product.metafield?.value || null,
       quantity,
       type: "withdrawal",
       image: variant.image,
@@ -208,26 +260,120 @@ app.post("/company/stock", async (req, res) => {
 });
 
 
-app.get(("/company/:companyId/turnover"), async (req, res) => {
-    try {
-        const { companyId } = req.params;
+app.get("/company/:companyId/article", async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const shopifyId = req.headers["x-shopify-id"];
 
-        const turnoverRef = db.collection("company").doc(companyId).collection("turnover");
+    const stockRef = db.collection("company").doc(companyId).collection("stock").doc(shopifyId);
 
-        const turnoverSnapshot = await turnoverRef.get();
+    const stockSnapshot = await stockRef.get();
 
-        if (turnoverSnapshot.empty) {
-        return res.status(404).json({ error: "No transcation data found for this company" });
-        }
-
-        const turnoverData = turnoverSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        return res.json(turnoverData);
-    } catch (e) {
-        logger.error(e);
-        return res.status(500).json({ error: e.message });        
+    if (stockSnapshot.empty) {
+      return res.status(404).json({ error: "No stock data found for this company" });
     }
-})
+
+    const quantity = stockSnapshot.data().quantity;
+
+    const normalizedVariantGid = shopifyId.startsWith("gid://")
+        ? shopifyId
+        : `gid://shopify/ProductVariant/${shopifyId}`;
+  
+    const query = `
+      query VariantById($id: ID!) {
+        productVariant(id: $id) {
+          id
+          title
+          sku
+          price
+          displayName
+          image { url altText }
+          product {
+            id
+            title
+            onlineStoreUrl
+            description
+            metafields(first: 100, namespace: "custom") {
+            nodes {
+              id
+              key
+              namespace
+              value
+              type
+
+              definition {
+                name
+                description
+              }
+            }
+          }
+            featuredImage { url altText }
+            images(first: 1) { edges { node { url altText } } }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(
+      `https://${SHOP}/admin/api/${API_VERSION}/graphql.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          query,
+          variables: { id: normalizedVariantGid },
+        }),
+      }
+    );
+
+    const json = await response.json();
+
+    if (json.errors?.length) {
+      return res.status(400).json({ errors: json.errors });
+    }
+
+    const variant = json?.data?.productVariant;
+    if (!variant) return res.status(404).send("Variant not found");
+
+    const numericId = variant.id.split("/").pop();
+
+    const imageUrl =
+      variant?.image?.url ||
+      variant?.product?.featuredImage?.url ||
+      variant?.product?.images?.edges?.[0]?.node?.url ||
+      "";
+
+    res.json({
+      variantId: variant.id,
+      quantity,
+      productId: variant.product?.id,
+      productName: variant.product?.title,
+      variantTitle: variant.title,
+      displayName: variant.displayName,
+      sku: variant.sku,
+      price: variant.price,
+      stock: variant.inventoryQuantity,
+      imageUrl,
+      productDescription: variant.product?.description,
+      metafields: variant.product?.metafields,
+      variantUrl: variant.product.onlineStoreUrl
+        ? `${variant.product.onlineStoreUrl}?variant=${numericId}`
+        : null
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+
+
+
+
 
 
 //** PROTECTED REQUESTS */
@@ -260,55 +406,61 @@ app.get(("/company/:companyId/turnover"), async (req, res) => {
 //     }
 // })
 
-app.get("/customer/:customerId", async (req, res) => {
-  console.log("Customer request:", req.params.customerId); // log the incoming UID
-  try {
-    const { customerId } = req.params;
-    const doc = await db.collection("customers").doc(customerId).get();
-    if (!doc.exists) return res.status(404).json({ error: "Customer not found" });
-    return res.json({ id: doc.id, ...doc.data() });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: e.message });
-  }
-});
+// app.get("/customer/:customerId", async (req, res) => {
+//   console.log("Customer request:", req.params.customerId); // log the incoming UID
+//   try {
+//     const { customerId } = req.params;
+//     const doc = await db.collection("customers").doc(customerId).get();
+//     if (!doc.exists) return res.status(404).json({ error: "Customer not found" });
+//     return res.json({ id: doc.id, ...doc.data() });
+//   } catch (e) {
+//     console.error(e);
+//     return res.status(500).json({ error: e.message });
+//   }
+// });
 
 
 
-app.get("/company", async (req, res) => {
-  try {
-    const snapshot = await db.collection("company").get();
-    const companies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return res.json(companies);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: e.message });
-  }
-});
+// app.get("/company", async (req, res) => {
+//   try {
+//     const snapshot = await db.collection("company").get();
+//     const companies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//     return res.json(companies);
+//   } catch (e) {
+//     console.error(e);
+//     return res.status(500).json({ error: e.message });
+//   }
+// });
 
-app.post("/company", async (req, res) => {
-  try {
-    const data = req.body;
-    const docRef = await db.collection("company").add(data);
-    const newCompany = await docRef.get();
-    return res.json({ id: docRef.id, ...newCompany.data() });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: e.message });
-  }
-});
+// app.post("/company", async (req, res) => {
+//   try {
+//     const data = req.body;
+//     const docRef = await db.collection("company").add(data);
+//     const newCompany = await docRef.get();
+//     return res.json({ id: docRef.id, ...newCompany.data() });
+//   } catch (e) {
+//     console.error(e);
+//     return res.status(500).json({ error: e.message });
+//   }
+// });
 
-app.get("/company/:companyId", async (req, res) => {
-  try {
-    const { companyId } = req.params;
-    const doc = await db.collection("company").doc(companyId).get();
-    if (!doc.exists) return res.status(404).json({ error: "Company not found" });
-    return res.json({ id: doc.id, ...doc.data() });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: e.message });
-  }
-});
+// app.get("/company/:companyId", async (req, res) => {
+//   try {
+//     const { companyId } = req.params;
+//     const doc = await db.collection("company").doc(companyId).get();
+//     if (!doc.exists) return res.status(404).json({ error: "Company not found" });
+//     return res.json({ id: doc.id, ...doc.data() });
+//   } catch (e) {
+//     console.error(e);
+//     return res.status(500).json({ error: e.message });
+//   }
+// });
+
+
+
+
+
+
 
 
 app.post("/company/:companyId/transactions/deposite", async (req, res) => {
@@ -376,64 +528,41 @@ app.post("/company/:companyId/transactions/deposite", async (req, res) => {
 });
 
 
-app.get("/product", async (req, res) => {
-  try {
-    const snapshot = await db.collection("products").get();
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return res.json(products);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: e.message });
-  }
-});
 
 
-// app.post("/product", async (req, res) => {
-//   try {
-//     const {
-//       productName,
-//       productDescription,
-//       productImageUrl,
-//       productCost,
-//       productDistributor,
-//       productOriginalUrl,
-//       productWeight
-//     } = req.body;
-
-//     // Create the object
-//     const productData = {
-//       productName,
-//       productDescription,
-//       productImageUrl,
-//       productCost,
-//       productDistributor,
-//       productOriginalUrl,
-//       productWeight
-//     };
-
-//     // Add to Firestore
-//     const docRef = await db.collection("products").add(productData);
-
-//     const newProduct = await docRef.get();
-//     return res.json({ id: docRef.id, ...newProduct.data() });
-//   } catch (e) {
-//     console.error(e);
-//     return res.status(500).json({ error: e.message });
-//   }
-// });
 
 
-app.get("/product/:productId", async (req, res) => {
-  try {
-    const { productId } = req.params;
-    const doc = await db.collection("products").doc(productId).get();
-    if (!doc.exists) return res.status(404).json({ error: "Product not found" });
-    return res.json({ id: doc.id, ...doc.data() });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: e.message });
-  }
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -445,7 +574,6 @@ SHOPIFY_API_SECRET="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"
 SHOPIFY_SCOPES="read_products"
 APP_URL="https://api-najddsqtfa-uc.a.run.app"
 const TOKENS = {};
-
 
 
 app.get("/shopify/auth", (req, res) => {
@@ -531,155 +659,6 @@ app.get("/shopify/callback", async (req, res) => {
     return res.status(500).send(e.message);
   }
 });
-
-
-
-
-
-app.get("/shopify/variant", async (req, res) => {
-  try {
-    const variantId = req.headers["x-variant-id"];
-    if (!variantId) return res.status(400).send("Missing x-variant-id");
-
-    const API_VERSION = "2024-10";
-
-    const normalizedVariantGid = variantId.startsWith("gid://")
-        ? variantId
-        : `gid://shopify/ProductVariant/${variantId}`;
-
-  
-    const query = `
-      query VariantById($id: ID!) {
-        productVariant(id: $id) {
-          id
-          title
-          sku
-          price
-          displayName
-          image { url altText }
-          product {
-            id
-            title
-            description
-            metafields(first: 100, namespace: "custom") {
-            nodes {
-              id
-              key
-              namespace
-              value
-              type
-
-              definition {
-                name
-                description
-              }
-            }
-          }
-            featuredImage { url altText }
-            images(first: 1) { edges { node { url altText } } }
-          }
-        }
-      }
-    `;
-
-    const response = await fetch(
-      `https://${SHOP}/admin/api/${API_VERSION}/graphql.json`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN,
-        },
-        body: JSON.stringify({
-          query,
-          variables: { id: normalizedVariantGid },
-        }),
-      }
-    );
-
-    const json = await response.json();
-
-    if (json.errors?.length) {
-      return res.status(400).json({ errors: json.errors });
-    }
-
-    const variant = json?.data?.productVariant;
-    if (!variant) return res.status(404).send("Variant not found");
-
-    const imageUrl =
-      variant?.image?.url ||
-      variant?.product?.featuredImage?.url ||
-      variant?.product?.images?.edges?.[0]?.node?.url ||
-      "";
-
-    res.json({
-      variantId: variant.id,
-      productId: variant.product?.id,
-      productName: variant.product?.title,
-      variantTitle: variant.title,
-      displayName: variant.displayName,
-      sku: variant.sku,
-      price: variant.price,
-      stock: variant.inventoryQuantity,
-      imageUrl,
-      productDescription: variant.product?.description,
-      metafields: variant.product?.metafields
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.get("/spoolstock", async (req, res) => {
-  try { 
-    res.status(200).send("en början");
-  } catch (liam210) {
-    res.status(500).send(liam210);
-  }
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 exports.api = onRequest(

@@ -2,13 +2,18 @@ import React, {useState, useEffect} from "react";
 import styles from "./transactionsComponent.module.css";
 
 
-const TransactionsComponent = () => {
+const TransactionsComponent = ({ reloadTrigger }) => {
 
     const [transactions, setTransactions] = useState([]);
 
+    useEffect(() => {
+        fetchTranscations();
+    }, [reloadTrigger])
 
-    const fetchTranscations = async (companyId) => {
+    const fetchTranscations = async () => {
         try {
+            const companyId = localStorage.getItem("CID");
+
             const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/${companyId}/transactions`);
 
             if (!response.ok) return; 
@@ -23,8 +28,7 @@ const TransactionsComponent = () => {
 
 
     useEffect(() => {
-        const CID = localStorage.getItem("CID");
-        fetchTranscations(CID);  
+        fetchTranscations();  
     }, [])
 
 
