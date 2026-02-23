@@ -4,6 +4,7 @@ import { FaShoppingCart } from "react-icons/fa";
 import { IoIosArrowBack, IoMdAdd } from "react-icons/io";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { BeatLoader, BounceLoader, ClipLoader, GridLoader, PropagateLoader, RingLoader } from "react-spinners";
 
 
 const StockComponent = ({ updateDashboard  }) => {
@@ -12,6 +13,7 @@ const StockComponent = ({ updateDashboard  }) => {
   const [withdrwalPopup, setWithdrawalPopup] = useState(false);
   const [renderedPopup, setRenderedPopup] = useState(false);
   const [animClass, setAnimClass] = useState(styles.enter);
+  const [loadingProductSpecification, setLoadingProductSpecification] = useState(false);
 
   const [choosenProduct, setChoosenProduct] = useState(null);
   const [stock, setStock] = useState([]);
@@ -27,32 +29,27 @@ const StockComponent = ({ updateDashboard  }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (choosenProduct) {
-      const auth = getAuth();
+    if (!choosenProduct) return;
 
-      return onAuthStateChanged(auth, async (user) => {
-        try {
-          const companyId = localStorage.getItem("CID");
+    const fetchVariant = async () => {
+      try {
+        const companyId = localStorage.getItem("CID");
+        const url = `${API_BASE}/company/${companyId}/article`;
+        const response = await fetch(url, {
+          headers: { "x-shopify-id": choosenProduct },
+        });
+        const data = await response.json();
+        console.log(data);
+        setVariantData(data);
+      } catch (err) {
+        console.error(err);
+        setErrorText(err?.message || "Okänt fel");
+      } finally {
+        setLoadingProductSpecification(false); 
+      }
+    };
 
-          const url = `${API_BASE}/company/${companyId}/article`;
-
-          const response = await fetch(url, {
-            headers: {
-              "x-shopify-id": choosenProduct
-            }
-          });
-
-          const data = await response.json();
-
-          setVariantData(data);
-          console.log(data);
-        } catch (err) {
-          console.error(err);
-          setErrorText(err?.message || "Okänt fel");
-        } 
-      });
-    }
-   
+    fetchVariant();
   }, [choosenProduct]);
 
 
@@ -77,6 +74,7 @@ const StockComponent = ({ updateDashboard  }) => {
   };
 
   const handleWithdrawalShow = (productId) => {    
+    setLoadingProductSpecification(true);
     setChoosenProduct(productId);
     setWithdrawalPopup(true);
   };
@@ -166,7 +164,7 @@ const handleWithdrawal = async () => {
                     <button onClick={handleOnClose} className={styles.backBtn}>
                       <IoIosArrowBack />
                     </button>
-                    <h1>{variantData?.productName} {variantData?.variantTitle}</h1>
+                    <h1>{variantData?.productName} {variantData?.variantTitle != "Default Title" && variantData?.variantTitle}</h1>
 
                   </div>
 
@@ -179,12 +177,18 @@ const handleWithdrawal = async () => {
                   </button>
                 </div>
 
-                {/* SCROLL CONTENT */}
+               
                 <div className={styles.previewContent}>
                   <div className={styles.middleContainer}>
                     <div className={styles.imageContainer}>
 
-                      <img alt={variantData?.productName} src={variantData?.imageUrl || variantData?.featuredImage} />
+                      {!loadingProductSpecification ? (
+                        <img alt={variantData?.productName} src={variantData?.imageUrl || variantData?.featuredImage} />
+                      ) : (
+                        <div className={styles.loadingImageContainer}>
+                          <BounceLoader size="60" color="#d3d3d3"/>
+                        </div>
+                      )}
 
                       <h2>Gör uttag</h2>
 
@@ -198,38 +202,44 @@ const handleWithdrawal = async () => {
                         <button className={styles.withdrawalBtn} onClick={() => handleWithdrawal()}>Gör uttag</button>
                       </div>
 
-                      <p className={styles.stockText}>Antal tillgängliga: {variantData?.quantity} ST</p>
-
-                    </div>
-                    <div className={styles.previewText}>
-                      <h1>Beskrivning</h1>
-                      <p className={styles.variantDescription}>{variantData?.productDescription}</p>
-                      <br/>
-
-                      <h1>Specifikationer</h1>
-
-                      {variantData?.metafields?.nodes?.map((metafield) => {
-                        if (metafield.key != "datasheet" && metafield.key != "weight" && metafield.value) {
-                          return (
-                            <div className={styles.productSpecificationContainer}>
-                              <p className={styles.metafieldDescription}>{metafield.definition.description}</p>
-                              <p className={styles.metafieldValue}>{metafield.value}</p>
-                            </div>
-                          )
-                        }
-                      })}
-                      <br/>
+                      <p className={styles.stockText}>Antal tillgängliga: {!loadingProductSpecification ? variantData?.quantity : <ClipLoader size="10" color="#d3d3d3"/>} ST</p>
                       
-                      <h1 className={styles.datasheetTitle}>Produktdatablad</h1>
-                      <p className={styles.datasheetText}>Ta del av produktens fullständiga datablad.</p>
-                      <button className={styles.downloadDataSheetButton} onClick={() => handleRedirectDatasheet()}><p>Ladda ner datablad</p></button>
-                      <br />
                     </div>
+                    {!loadingProductSpecification ? (
+                      <div className={styles.previewText}>
+                        <h1>Beskrivning</h1>
+                        <p className={styles?.variantDescription}>{variantData?.productDescription}</p>
+                        <br/>
+
+                        <h1>Specifikationer</h1>
+
+                        {variantData?.metafields?.nodes?.map((metafield) => {
+                          if (metafield.key != "datasheet" && metafield.key != "weight" && metafield.key != "max_temperatur" && metafield.value) {
+                            return (
+                              <div className={styles.productSpecificationContainer}>
+                                <p className={styles.metafieldDescription}>{metafield.definition?.description}</p>
+                                <p className={styles.metafieldValue}>{metafield.value}</p>
+                              </div>
+                            )
+                          }
+                        })}
+                        <br/>
+                        
+                        <h1 className={styles.datasheetTitle}>Produktdatablad</h1>
+                        <p className={styles.datasheetText}>Ta del av produktens fullständiga datablad.</p>
+                        <button className={styles.downloadDataSheetButton} onClick={() => handleRedirectDatasheet()}><p>Ladda ner datablad</p></button>
+                        <br />
+                      </div>
+                    ) : (
+                      <div className={styles.loadingPreviewContainer}>                 
+                        <BounceLoader color="#d3d3d3" />
+                      </div>
+                    )}
+
                   </div>
                 </div>
-
-
               </div>
+       
             ) : (
               <>
 
@@ -254,7 +264,7 @@ const handleWithdrawal = async () => {
                       <tr className={styles.tableHeader}>
                         <th className={styles.distributorRowTh}>Leverantör</th>
                         <th>Beskrivning</th>
-                        <th>Vikt</th>
+                        <th>Tillgänglighet</th>
                         <th>Antal</th>
                       </tr>
                     </thead>
@@ -272,7 +282,7 @@ const handleWithdrawal = async () => {
                             {product.vendor}
                           </td>
                           <td>{product.variantName}</td>
-                          <td>{product.weight} KG</td>
+                          <td>{product.quantity < 1 ? <p className={styles.availabilityText}>Ej Tillgänglig</p> : "Tillgänglig"}</td>
                           <td>{product.quantity} ST</td>
                         </tr>
                       ))}

@@ -406,18 +406,18 @@ app.get("/company/:companyId/article", async (req, res) => {
 //     }
 // })
 
-// app.get("/customer/:customerId", async (req, res) => {
-//   console.log("Customer request:", req.params.customerId); // log the incoming UID
-//   try {
-//     const { customerId } = req.params;
-//     const doc = await db.collection("customers").doc(customerId).get();
-//     if (!doc.exists) return res.status(404).json({ error: "Customer not found" });
-//     return res.json({ id: doc.id, ...doc.data() });
-//   } catch (e) {
-//     console.error(e);
-//     return res.status(500).json({ error: e.message });
-//   }
-// });
+app.get("/customer/:customerId", async (req, res) => {
+  console.log("Customer request:", req.params.customerId); // log the incoming UID
+  try {
+    const { customerId } = req.params;
+    const doc = await db.collection("customers").doc(customerId).get();
+    if (!doc.exists) return res.status(404).json({ error: "Customer not found" });
+    return res.json({ id: doc.id, ...doc.data() });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
 
 
 
@@ -546,14 +546,101 @@ app.post("/company/:companyId/transactions/deposite", async (req, res) => {
 
 
 
+app.get("/articles", async (req, res) => {
+  try {
+    const query = `
+      query getProducts($query: String!) {
+        products(first: 250, query: $query) {
+          edges {
+            node {
+              id
+              title
+              vendor
+              tags
+              onlineStoreUrl
+              featuredImage {
+                url
+              }
+              variants(first: 100) {
+                edges {
+                  node {
+                    id
+                    title
+                    price
+                    image {
+                      url
+                    }
+                    metafield(namespace: "custom", key: "weight") {
+                      value
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
 
+    // Query för att filtrera produkter med taggen "SpoolStock"
+    const queryString = 'tag:"SpoolStock"';
 
+    const response = await fetch(
+      `https://${SHOP}/admin/api/${API_VERSION}/graphql.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          query,
+          variables: { query: queryString },
+        }),
+      }
+    );
 
+    const result = await response.json();
 
+    if (result.errors) {
+      return res.status(500).json({ error: result.errors });
+    }
 
+    // Bygg produkterna med alla varianter
+    const products = result.data.products.edges
+      .map(edge => edge.node)
+      .flatMap(product =>
+        product.variants.edges.map(variantEdge => {
+          const variant = variantEdge.node;
+          const numericId = variant.id.split("/").pop();
 
+          return {
+            variantId: numericId,
+            productName: product.title,
+            variantName:
+              variant.title === "Default Title"
+                ? product.title
+                : `${product.title} - ${variant.title}`,
+            vendor: product.vendor,
+            price: variant.price,
+            quantity: 0, // Här kan du slå upp mot stockMap om du vill
+            productImage: product.featuredImage?.url || null,
+            variantImage: variant.image?.url || null,
+            weight: variant.metafield?.value || null,
+            variantUrl: product.onlineStoreUrl
+              ? `${product.onlineStoreUrl}?variant=${numericId}`
+              : null
+          };
+        })
+      );
 
+    return res.json(products);
 
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
 
 
 

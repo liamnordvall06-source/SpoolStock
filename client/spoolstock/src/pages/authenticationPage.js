@@ -21,10 +21,8 @@ const AuthenticationPage = () => {
         const user = result.user;
 
         const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/customer/${user.uid}`);
-
         const data = await response.json();
         
-
         if (data) {
             localStorage.setItem("CID", data.companyId);
             navigate("/");
@@ -54,18 +52,6 @@ const AuthenticationPage = () => {
                             <h1>Välkommen tillbaka till SpoolStock</h1>
                             <p>Ha koll på dina lagersaldon och gör uttag från ditt filament lager</p>
                         </div>
-
-                        <form>
-                            <label>Email</label>
-                            <input type="text"></input>
-
-                            <label>Lösenord</label>
-                            <input type="password"></input>
-                            
-                            {/* <a href="/">Glömt ditt lösenord?</a> */}
-
-                            <button type="submit">Logga in</button>
-                        </form>
 
                         <div className={styles.footerContainer}>
                             <button onClick={handleGoogleSign}>
