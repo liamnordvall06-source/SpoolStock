@@ -3,12 +3,18 @@ import styles from "./summarComponent.module.css";
 import { TbPackage, TbCurrencyDollar, TbHandStop, TbChartAreaLine } from "react-icons/tb";
 import { FaArrowTrendDown, FaArrowTrendUp } from "react-icons/fa6";
 
-const SummaryComponent = ({ reloadTrigger }) => {
+const SummaryComponent = ({ reloadTrigger, customerId }) => {
   const [transactions, setTransactions] = useState([]);
 
   const fetchTransactions = async () => {
     try {
-      const companyId = localStorage.getItem("CID");
+      let companyId = "";
+
+      if (customerId) {
+        companyId = customerId;
+      } else {
+        companyId = localStorage.getItem("CID");
+      }
 
       const response = await fetch(
         `https://api-najddsqtfa-uc.a.run.app/company/${companyId}/transactions`

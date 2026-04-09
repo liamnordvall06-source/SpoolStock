@@ -118,3 +118,74 @@
   }
 
 }
+
+.transcationsHeaderContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.transcationsHeaderContainer button {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #4294FF;
+  border: none;
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+  gap: 0;
+
+  transition:
+    width 260ms cubic-bezier(.21,1.02,.73,1),
+    border-radius 260ms cubic-bezier(.21,1.02,.73,1),
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.transcationsHeaderContainer button svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.transcationsHeaderContainer button::after {
+  content: "Skriv ut";
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-left: 0;
+
+  transition:
+    max-width 260ms cubic-bezier(.21,1.02,.73,1),
+    opacity 160ms ease,
+    margin-left 260ms cubic-bezier(.21,1.02,.73,1);
+}
+
+.transcationsHeaderContainer button:hover {
+  width: 105px;
+  border-radius: 20px;
+  justify-content: flex-start;
+  padding-left: 12px;
+  padding-right: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+
+.transcationsHeaderContainer button:hover::after {
+  max-width: 200px;
+  opacity: 1;
+  margin-left: 8px;
+}

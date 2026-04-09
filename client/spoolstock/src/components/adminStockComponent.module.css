@@ -1,0 +1,216 @@
+.mainContainer {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+  overflow: hidden;
+  height: 700px;
+}
+
+.innerContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%; 
+}
+
+.headerContainer {
+    display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.headerContainer h1 {
+  font-weight: 400;
+  font-size: 22px;
+  color: #444;
+  margin: 10px 0;
+}
+
+
+.headerContainer button {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+  gap: 0;
+
+  transition:
+    width 260ms cubic-bezier(.21,1.02,.73,1),
+    border-radius 260ms cubic-bezier(.21,1.02,.73,1),
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+.headerContainer .shopBtn {
+  background-color: #4294FF;
+}
+
+
+.headerContainer .depositeBtn {
+  background-color: #3a3a3a;
+}
+
+.headerContainer .depositeBtn::after {
+    content: "Skapa transaktion";
+}
+
+.headerContainer .shopBtn::after {
+    content: "Skriv ut";
+}
+
+
+.headerContainer button svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.headerContainer button::after {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-left: 0;
+
+  transition:
+    max-width 260ms cubic-bezier(.21,1.02,.73,1),
+    opacity 160ms ease,
+    margin-left 260ms cubic-bezier(.21,1.02,.73,1);
+}
+
+.headerContainer button:hover {
+  width: 105px;
+  border-radius: 20px;
+  justify-content: flex-start;
+  padding-left: 12px;
+  padding-right: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+
+
+.headerContainer .depositeBtn:hover {
+  width: 180px;
+}
+
+.headerContainer button:hover::after {
+  max-width: 200px;
+  opacity: 1;
+  margin-left: 8px;
+}
+
+.stockTableWrapper {
+  flex: 1;
+  overflow-y: auto; 
+}
+
+.stockTableWrapper table {
+  width: 100%;
+  border-collapse: separate;     
+  border-spacing: 0 10px;       
+  text-align: left;
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+
+.stockTableWrapper .tableHeader{
+  position: sticky;
+  top: 10px;
+  z-index: 1;
+  background: #F6F8FA;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  text-align: left;
+  height: 50px;
+}
+
+.stockTableWrapper th {
+  font-weight: 500;
+}
+
+.stockTableWrapper td {
+  border-bottom: 1px solid #d3d3d3;
+  transition: transform 220ms cubic-bezier(.21,1.02,.73,1),
+              box-shadow 220ms cubic-bezier(.21,1.02,.73,1);
+}
+
+.stockTableWrapper tr {
+  height: 80px;
+}
+
+.stockTableWrapper table {
+  border-collapse: separate;      
+  border-spacing: 0 10px;        
+}
+
+.stockTableWrapper tbody tr:hover {
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.015),
+    0 6px 12px rgba(0,0,0,0.03),
+    0 12px 24px rgba(0,0,0,0.02);
+}
+
+.stockTableWrapper p {
+    margin: 0;
+}
+
+.tableHeader::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: #ffffff;
+}
+
+.availabilyIndicator {
+  width: 20px;
+  height: 20px;
+  background: rgb(255, 81, 81);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  border-radius: 50%;
+}
+
+.availabilyIndicatorAvailable {
+  width: 20px;
+  height: 20px;
+  background: #00ab3c;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  border-radius: 50%;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 10px
+}
+
+.catalogueTableWrapper {
+  height: 700px;
+}
+
+.stockValueText {
+  margin: 0;
+}

@@ -1,22 +1,21 @@
-import React, {useState, useEffect} from "react";
-import styles from "./transactionsComponent.module.css";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import React, { useState, useEffect } from "react";
+import styles from "./adminTransactionsComponent.module.css";
 import { FaPrint } from "react-icons/fa";
-import BrandLogo from "../assets/BlackLogo.png";
 
-
-const TransactionsComponent = ({ reloadTrigger }) => {
+const AdminTransactionsComponent = ({ customerId }) => {
 
     const [transactions, setTransactions] = useState([]);
 
-    useEffect(() => {
-        fetchTranscations();
-    }, [reloadTrigger])
-
     const fetchTranscations = async () => {
         try {
-            const companyId = localStorage.getItem("CID");
+
+            let companyId = "";
+
+            if (customerId) {
+                companyId = customerId;
+            } else {
+                companyId = localStorage.getItem("CID");
+            }
 
             const response = await fetch(`https://api-najddsqtfa-uc.a.run.app/company/${companyId}/transactions`);
 
@@ -35,125 +34,20 @@ const TransactionsComponent = ({ reloadTrigger }) => {
         fetchTranscations();  
     }, [])
 
-    const handleExportPdf = () => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-
-        const img = new Image();
-        img.src = BrandLogo;
-
-        const now = new Date();
-        const formattedDate = now.toLocaleDateString("sv-SE");
-
-        const sortedTransactions = [...transactions].sort((a, b) => {
-            const dateA = a.date?._seconds
-            ? a.date._seconds
-            : new Date(a.date).getTime() / 1000;
-
-            const dateB = b.date?._seconds
-            ? b.date._seconds
-            : new Date(b.date).getTime() / 1000;
-
-            return dateB - dateA;
-        });
-
-        const tableRows = sortedTransactions.map((transaction) => {
-            let dateStr = "N/A";
-
-            if (transaction.date) {
-            if (transaction.date.toDate) {
-                dateStr = transaction.date.toDate().toLocaleDateString("sv-SE");
-            } else if (transaction.date._seconds) {
-                dateStr = new Date(transaction.date._seconds * 1000).toLocaleDateString("sv-SE");
-            } else {
-                dateStr = new Date(transaction.date).toLocaleDateString("sv-SE");
-            }
-            }
-
-            return [
-            `#${transaction.id || "-"}`,
-            transaction.customerName || "-",
-            dateStr,
-            transaction.productName || "-",
-            transaction.quantity ?? "-",
-            transaction.type === "deposite" ? "Insättning" : "Uttag",
-            ];
-        });
-
-        const renderPdf = () => {
-            doc.setFontSize(16);
-            doc.text("Transaktioner", 14, 35);
-
-            doc.setFontSize(10);
-            doc.text(`Exportdatum: ${formattedDate}`, pageWidth - 14, 35, {
-            align: "right",
-            });
-
-            autoTable(doc, {
-            startY: 45,
-            head: [[
-                "Transaktion ID",
-                "Uttag gjort av",
-                "Datum",
-                "Artikel",
-                "Antal",
-                "Typ",
-            ]],
-            body: tableRows,
-            styles: {
-                fontSize: 8,
-                cellPadding: 4,
-                minCellHeight: 12,
-                valign: "middle",
-                lineColor: [200, 200, 200],
-                lineWidth: 0.2,
-            },
-            headStyles: {
-                fillColor: [0, 0, 0],
-                textColor: [255, 255, 255],
-                fontStyle: "bold",
-            },
-            alternateRowStyles: {
-                fillColor: [240, 240, 240],
-            },
-            columnStyles: {
-                2: { halign: "center" },
-                4: { halign: "center" },
-                5: { halign: "center" },
-            },
-            });
-
-            window.open(doc.output("bloburl"));
-        };
-
-        img.onload = () => {
-            const imgWidth = 50;
-            const imgHeight = img.width ? (img.height * imgWidth) / img.width : 20;
-
-            doc.addImage(img, "PNG", 14, 10, imgWidth, imgHeight);
-            renderPdf();
-        };
-
-        img.onerror = () => {
-            renderPdf();
-        };
-        };
-
 
     return (
-        <div className={styles.transcationsContainer}>
-            <div className={styles.transcationsInnerContainer}>
-                <div className={styles.transcationsHeaderContainer}>
+        <div className={styles.mainContainer}>
+            <div className={styles.innerContainer}>
+                <div className={styles.headerContainer}>
                     <h1>Transaktioner</h1>
                     <button
                         className={styles.shopBtn}
                         aria-label="Skriv ut"
-                        onClick={handleExportPdf}
                     >
                         <FaPrint />
-                    </button>   
+                    </button>                    
                 </div>
-                <div className={styles.transcationsTableWrapper}>
+                <div className={styles.transactionsTableWrapper}>
                     <table>
                         <thead>
                             <tr className={styles.tableHeader}>
@@ -165,7 +59,6 @@ const TransactionsComponent = ({ reloadTrigger }) => {
                                 <th>Typ</th>
                             </tr>
                         </thead>
-                        
                         <tbody>
                             {transactions && transactions    .sort((a, b) => {
                                 const dateA = a.date?._seconds ? a.date._seconds : new Date(a.date).getTime() / 1000;
@@ -209,14 +102,14 @@ const TransactionsComponent = ({ reloadTrigger }) => {
                                             <td>{transaction.type === "deposite" ? "Insättning" : "Uttag"}</td>
                                         </tr>
                                         );
-                                    })}
+                                    })}           
                         </tbody>
-                    </table>
-                </div>
+                    </table>                    
+                </div>                
             </div>
         </div>
     );
 }
 
 
-export default TransactionsComponent;
+export default AdminTransactionsComponent

@@ -40,10 +40,17 @@ app.get("/company/:companyId/stock", async (req, res) => {
     }
 
     const stockMap = {};
-    const variantIds = stockSnapshot.docs.map(doc => {
-      const shopifyId = doc.id; 
-      stockMap[shopifyId] = doc.data().quantity; // ✅ numeriskt ID som nyckel
-      return `gid://shopify/ProductVariant/${shopifyId}`; // för GraphQL
+    const variantIds = stockSnapshot.docs.map((doc) => {
+      const shopifyId = doc.id;
+      const data = doc.data();
+
+      stockMap[shopifyId] = {
+        quantity: data.quantity || 0,
+        discount: data.discount || 0,
+        wantedStock: data.wantedStock || 0,
+      };
+
+      return `gid://shopify/ProductVariant/${shopifyId}`;
     });
 
     const query = `
@@ -55,6 +62,12 @@ app.get("/company/:companyId/stock", async (req, res) => {
             price
             image {
               url
+            }
+            inventoryItem {
+              unitCost {
+                amount
+                currencyCode
+              }
             }
             product {
               title
@@ -93,30 +106,34 @@ app.get("/company/:companyId/stock", async (req, res) => {
       return res.status(500).json({ error: result.errors });
     }
 
-  const products = result.data.nodes
-    .filter(Boolean)
-    .map(variant => {
-      const numericId = variant.id.split("/").pop(); // 123456789
-      const quantity = stockMap[numericId] || 0; // ✅ nu matchar nyckeln
+const products = result.data.nodes
+  .filter(Boolean)
+  .map((variant) => {
+    const numericId = variant.id.split("/").pop();
+    const stockData = stockMap[numericId] || {};
 
-      return {
-        variantId: numericId,
-        productName: variant.product.title,
-        variantName:
-          variant.title === "Default Title"
-            ? variant.product.title
-            : `${variant.product.title} - ${variant.title}`,
-        vendor: variant.product.vendor,
-        price: variant.price,
-        quantity, // ✅ korrekt
-        productImage: variant.product.featuredImage?.url || null,
-        variantImage: variant.image?.url || null,
-        weight: variant.product.metafield?.value || null,
-        variantUrl: variant.product.onlineStoreUrl
-          ? `${variant.product.onlineStoreUrl}?variant=${numericId}`
-          : null
-      };
-    });
+    return {
+      variantId: numericId,
+      productName: variant.product.title,
+      variantName:
+        variant.title === "Default Title"
+          ? variant.product.title
+          : `${variant.product.title} - ${variant.title}`,
+      vendor: variant.product.vendor,
+      price: variant.price,
+      purchasePrice: variant.inventoryItem?.unitCost?.amount || null,
+      purchasePriceCurrency: variant.inventoryItem?.unitCost?.currencyCode || null,
+      quantity: stockData.quantity || 0,
+      discount: stockData.discount || 0,
+      wantedStock: stockData.wantedStock || 0,
+      productImage: variant.product.featuredImage?.url || null,
+      variantImage: variant.image?.url || null,
+      weight: variant.product.metafield?.value || null,
+      variantUrl: variant.product.onlineStoreUrl
+        ? `${variant.product.onlineStoreUrl}?variant=${numericId}`
+        : null,
+    };
+  });
 
     return res.json(products);
 
@@ -147,6 +164,130 @@ app.get(("/company/:companyId/transactions"), async (req, res) => {
         return res.status(500).json({ error: e.message });        
     }
 })
+
+app.post("/company/stock/deposite", async (req, res) => {
+  try {
+    const customerId = req.headers["x-customer-id"];
+    const companyId = req.headers["x-company-id"];
+    const shopifyId = req.headers["x-shopify-id"];
+    const quantity = parseInt(req.headers["x-quantity"], 10);
+    const customerProfileImage = req.headers["x-customer-image"] || "";
+
+    if (!customerId || !companyId || !shopifyId || Number.isNaN(quantity)) {
+      return res.status(400).json({ error: "There are missing fields in the request" });
+    }
+
+    const customerRef = db.collection("customers").doc(customerId);
+    const customerDoc = await customerRef.get();
+
+    if (!customerDoc.exists) {
+      return res.status(404).json({ error: "Customer was not found in database" });
+    }
+
+    const customerData = customerDoc.data();
+    const customerName = customerData.name;
+
+    const normalizedVariantGid = shopifyId.startsWith("gid://")
+      ? shopifyId
+      : `gid://shopify/ProductVariant/${shopifyId}`;
+
+    const query = `
+      query VariantById($id: ID!) {
+        productVariant(id: $id) {
+          id
+          title
+          price
+          displayName
+          image { url altText }
+          product {
+            id
+            title
+            description
+            featuredImage { url altText }
+            images(first: 1) { edges { node { url altText } } }
+            metafield(namespace: "custom", key: "weight") {
+              value
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(
+      `https://${SHOP}/admin/api/${API_VERSION}/graphql.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          query,
+          variables: { id: normalizedVariantGid },
+        }),
+      }
+    );
+
+    const json = await response.json();
+    const variant = json?.data?.productVariant;
+
+    if (!variant) {
+      return res.status(404).json({ error: "Product variant was not found in Shopify" });
+    }
+
+    const stockRef = db.collection("company").doc(companyId).collection("stock").doc(shopifyId);
+    const stockDoc = await stockRef.get();
+
+    let newQuantity = quantity;
+
+    if (!stockDoc.exists) {
+      if (quantity < 0) {
+        return res.status(400).json({ error: "Quantity can not be under 0" });
+      }
+
+      await stockRef.set({
+        quantity,
+      });
+    } else {
+      const stockData = stockDoc.data();
+      newQuantity = parseInt(stockData.quantity || 0, 10) + quantity;
+
+      if (newQuantity < 0) {
+        return res.status(400).json({ error: "Quantity can not be under 0" });
+      }
+
+      await stockRef.update({
+        quantity: newQuantity,
+        updatedAt: new Date(),
+      });
+    }
+
+    const transactionsRef = db.collection("company").doc(companyId).collection("transactions");
+
+    await transactionsRef.add({
+      date: new Date(),
+      productCost: variant.price,
+      shopifyId,
+      productName: variant.displayName,
+      productWeight: variant.product.metafield?.value || null,
+      quantity,
+      type: "deposite",
+      image: variant.image || null,
+      featuredImage: variant.product.featuredImage || null,
+      customerName,
+      customerId,
+      customerProfileImage,
+    });
+
+    return res.json({
+      message: "Stock and transaction updated successfully",
+      quantity: newQuantity,
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
 
 app.post("/company/stock", async (req, res) => {
   try {
@@ -421,40 +562,30 @@ app.get("/customer/:customerId", async (req, res) => {
 
 
 
-// app.get("/company", async (req, res) => {
-//   try {
-//     const snapshot = await db.collection("company").get();
-//     const companies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-//     return res.json(companies);
-//   } catch (e) {
-//     console.error(e);
-//     return res.status(500).json({ error: e.message });
-//   }
-// });
+app.get("/company", async (req, res) => {
+  try {
+    const snapshot = await db.collection("company").get();
+    const companies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return res.json(companies);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
 
-// app.post("/company", async (req, res) => {
-//   try {
-//     const data = req.body;
-//     const docRef = await db.collection("company").add(data);
-//     const newCompany = await docRef.get();
-//     return res.json({ id: docRef.id, ...newCompany.data() });
-//   } catch (e) {
-//     console.error(e);
-//     return res.status(500).json({ error: e.message });
-//   }
-// });
 
-// app.get("/company/:companyId", async (req, res) => {
-//   try {
-//     const { companyId } = req.params;
-//     const doc = await db.collection("company").doc(companyId).get();
-//     if (!doc.exists) return res.status(404).json({ error: "Company not found" });
-//     return res.json({ id: doc.id, ...doc.data() });
-//   } catch (e) {
-//     console.error(e);
-//     return res.status(500).json({ error: e.message });
-//   }
-// });
+app.get("/company/:companyId", async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const doc = await db.collection("company").doc(companyId).get();
+    if (!doc.exists) return res.status(404).json({ error: "Company not found" });
+    return res.json({ id: doc.id, ...doc.data() });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 
 
 
@@ -746,6 +877,51 @@ app.get("/shopify/callback", async (req, res) => {
     return res.status(500).send(e.message);
   }
 });
+
+
+
+
+
+
+
+
+app.get("/transactions", async (req, res) => {
+  try {
+    const snapshot = await db.collectionGroup("transactions").get();
+
+    if (snapshot.empty) {
+      return res.status(404).json({ error: "No transactions found" });
+    }
+
+    const transactionsData = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      companyId: doc.ref.parent.parent.id
+    }));
+
+    return res.json(transactionsData);
+
+  } catch (e) {
+    logger.error(e);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 exports.api = onRequest(

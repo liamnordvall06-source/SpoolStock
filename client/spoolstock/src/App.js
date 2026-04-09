@@ -8,9 +8,10 @@ import AuthenticationPage from './pages/authenticationPage';
 
 import ProtectedRoute from './routes/ProtectedRoute';
 import WithdrawalPage from './pages/withdrawalPage';
-import AdminStockPage from './pages/admin/AdminStockPage';
 import TransactionsPage from './pages/transactionsPage';
 import ProductCataloguePage from './pages/productCataloguePage';
+import AdminDashboardPage from './pages/adminDashboardPage';
+import AdminCustomerPage from './pages/adminCustomerPage';
 
 
 function App() {
@@ -53,6 +54,15 @@ function App() {
           />
 
           <Route 
+            path="/company/:customerId" 
+            element={
+              <ProtectedRoute>
+                <AdminCustomerPage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
             path="/catalogue" 
             element={
               <ProtectedRoute>
@@ -61,16 +71,14 @@ function App() {
             } 
           />
 
-
-          {/* <Route 
-            path="/admin/stock" 
+          <Route 
+            path="/admin" 
             element={
               <ProtectedRoute>
-                <AdminStockPage />
+                <AdminDashboardPage />
               </ProtectedRoute>
             } 
-          /> */}
-
+          />
 
           {/* Public routes */}
           <Route path="/auth" element={<AuthenticationPage />} />

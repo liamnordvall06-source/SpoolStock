@@ -500,7 +500,7 @@
 }
 
 .stockHeaderContainer button::after {
-  content: "Lägg till artiklar";
+  content: "Skriv ut";
   display: inline-block;
   max-width: 0;
   opacity: 0;
@@ -515,7 +515,7 @@
 }
 
 .stockHeaderContainer button:hover {
-  width: 160px;
+  width: 105px;
   border-radius: 20px;
   justify-content: flex-start;
   padding-left: 12px;
@@ -547,6 +547,18 @@
   align-items: center;
 }
 
-.availabilityText {
-  color: rgb(255, 81, 81);
+.availabilyIndicator {
+  width: 20px;
+  height: 20px;
+  background: rgb(255, 81, 81);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  border-radius: 50%;
+}
+
+.availabilyIndicatorAvailable {
+  width: 20px;
+  height: 20px;
+  background: #00ab3c;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  border-radius: 50%;
 }
