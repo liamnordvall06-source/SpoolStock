@@ -4,6 +4,9 @@ const logger = require("firebase-functions/logger");
 const express = require("express");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+
+
 admin.initializeApp();
 
 const db = admin.firestore();
@@ -21,7 +24,7 @@ const API_VERSION = "2024-10";
 
 //* OPEN REQUESTS */
 
-
+const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: "brandit3dofficial@gmail.com", pass: "dqja wtpq bgzp cktv", }, });
 
 
 
@@ -391,6 +394,23 @@ app.post("/company/stock", async (req, res) => {
       customerId,    
       customerProfileImage
     })
+
+    // Efter att du uppdaterat stock och lagt till transaktionen
+    const mailOptions = {
+      from: "brandit3dofficial@gmail.com",
+      to: ["liam@brandit3d.com", "henrik@brandit3d.com", "susanna@brandit3d.com", "zebastian@brandit3d.com"], // change this
+      subject: "SpoolStock Uttag Registrerat",
+      html: `
+        <h2>Uttag registrerat</h2>
+        <p><strong>Kund:</strong> ${customerName}</p>
+        <p><strong>Produkt:</strong> ${variant.displayName}</p>
+        <p><strong>Antal:</strong> ${quantity}</p>
+        <p><strong>Antal kvar:</strong> ${newQuantity}</p>
+        <p><strong>Datum:</strong> ${new Date().toLocaleString()}</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
 
     return res.json({ message: "Stock and transaction updated successfully" });
 

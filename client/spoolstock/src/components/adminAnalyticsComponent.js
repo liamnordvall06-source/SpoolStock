@@ -71,7 +71,19 @@ const AdminAnalyticsComponent = () => {
       }
 
       const data = await response.json();
-      setTransactions(Array.isArray(data) ? data : []);
+
+      let transactions = [];
+
+      for (let i = 0; i < data.length; i++) {
+        if (data[i].companyId != "EtgKFHKkwai5vLtBhdWJ") {
+          transactions.push(data[i]);
+        }
+      }
+
+      setTransactions(Array.isArray(transactions) ? transactions : []);
+
+
+
     } catch (e) {
       console.log("Fetch transactions failed:", e.message);
     }
